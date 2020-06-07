@@ -58,7 +58,10 @@ local options = {
 	-- The font size used in the menu. Isn't used for the notifications (started encode, finished encode etc)
 	font_size = 28,
 	margin = 10,
-	message_duration = 5
+	message_duration = 5,
+	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
+	audio = false,
+	burn_subtitles = false
 }
 
 mpopts.read_options(options)

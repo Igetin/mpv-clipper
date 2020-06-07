@@ -63,7 +63,10 @@ local options = {
 	-- The font size used in the menu. Isn't used for the notifications (started encode, finished encode etc)
 	font_size = 28,
 	margin = 10,
-	message_duration = 5
+	message_duration = 5,
+	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
+	audio = false,
+	burn_subtitles = false
 }
 
 mpopts.read_options(options)
@@ -265,6 +268,10 @@ end
 local get_pass_logfile_path
 get_pass_logfile_path = function(encode_out_path)
   return tostring(encode_out_path) .. "-video-pass1.log"
+end
+local starts_with
+starts_with = function(str, start)
+  return string.sub(str, 1, #start) == start
 end
 local dimensions_changed = true
 local _video_dimensions = { }
@@ -1916,42 +1923,6 @@ do
     __init = function(self, callback)
       self.callback = callback
       self.currentOption = 1
-      local scaleHeightOpts = {
-        possibleValues = {
-          {
-            -1,
-            "no"
-          },
-          {
-            240
-          },
-          {
-            360
-          },
-          {
-            480
-          },
-          {
-            720
-          },
-          {
-            1080
-          },
-          {
-            1440
-          },
-          {
-            2160
-          }
-        }
-      }
-      local filesizeOpts = {
-        step = 250,
-        min = 0,
-        altDisplayNames = {
-          [0] = "0 (constant quality)"
-        }
-      }
       local crfOpts = {
         step = 1,
         min = -1,
@@ -1959,56 +1930,35 @@ do
           [-1] = "disabled"
         }
       }
-      local formatIds = {
-        "webm-vp8",
-        "webm-vp9",
-        "mp4",
-        "mp4-nvenc",
-        "raw"
-      }
-      local formatOpts = {
+      local profiles = mp.get_property_native('profile-list')
+      local profileOpts = {
         possibleValues = (function()
           local _accum_0 = { }
           local _len_0 = 1
-          for _index_0 = 1, #formatIds do
-            local fId = formatIds[_index_0]
-            _accum_0[_len_0] = {
-              fId,
-              formats[fId].displayName
-            }
-            _len_0 = _len_0 + 1
+          for i, p in ipairs(profiles) do
+            if starts_with(p['name'], 'enc-') then
+              _accum_0[_len_0] = {
+                p['name'],
+                p['profile-desc']
+              }
+              _len_0 = _len_0 + 1
+            end
           end
           return _accum_0
         end)()
       }
       self.options = {
         {
-          "output_format",
-          Option("list", "Output Format", options.output_format, formatOpts)
+          "encoding_profile",
+          Option("list", "Encoding profile", options.encoding_profile, profileOpts)
         },
         {
-          "twopass",
-          Option("bool", "Two Pass", options.twopass)
+          "audio",
+          Option("bool", "Audio", options.audio)
         },
         {
-          "apply_current_filters",
-          Option("bool", "Apply Current Video Filters", options.apply_current_filters)
-        },
-        {
-          "scale_height",
-          Option("list", "Scale Height", options.scale_height, scaleHeightOpts)
-        },
-        {
-          "strict_filesize_constraint",
-          Option("bool", "Strict Filesize Constraint", options.strict_filesize_constraint)
-        },
-        {
-          "write_filename_on_metadata",
-          Option("bool", "Write Filename on Metadata", options.write_filename_on_metadata)
-        },
-        {
-          "target_filesize",
-          Option("int", "Target Filesize", options.target_filesize, filesizeOpts)
+          "burn_subtitles",
+          Option("bool", "Burn subtitles", options.burn_subtitles)
         },
         {
           "crf",

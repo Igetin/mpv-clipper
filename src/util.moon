@@ -136,3 +136,6 @@ reverse = (list) ->
 
 get_pass_logfile_path = (encode_out_path) ->
 	"#{encode_out_path}-video-pass1.log"
+
+starts_with = (str, start) ->
+   return string.sub(str, 1, #start) == start

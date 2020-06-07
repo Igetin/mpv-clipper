@@ -132,10 +132,16 @@ class EncodeOptionsPage extends Page
 			altDisplayNames:
 				[-1]: "disabled"
 
+		profiles = mp.get_property_native('profile-list')
+		profileOpts =
+			possibleValues: [{p['name'], p['profile-desc']} for i, p in ipairs(profiles) when starts_with(p['name'], 'enc-')]
 
 		-- This could be a dict instead of a array of pairs, but order isn't guaranteed
 		-- by dicts on Lua.
 		@options = {
+			{"encoding_profile", Option("list", "Encoding profile", options.encoding_profile, profileOpts)},
+			{"audio", Option("bool", "Audio", options.audio)},
+			{"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},
 			{"crf", Option("int", "CRF", options.crf, crfOpts)}
 		}
 
