@@ -125,14 +125,6 @@ class EncodeOptionsPage extends Page
 	new: (callback) =>
 		@callback = callback
 		@currentOption = 1
-		-- TODO this shouldn't be here.
-		scaleHeightOpts =
-			possibleValues: {{-1, "no"}, {240}, {360}, {480}, {720}, {1080}, {1440}, {2160}}
-		filesizeOpts =
-			step: 250
-			min: 0
-			altDisplayNames:
-				[0]: "0 (constant quality)"
 		
 		crfOpts =
 			step: 1
@@ -140,22 +132,10 @@ class EncodeOptionsPage extends Page
 			altDisplayNames:
 				[-1]: "disabled"
 
-		-- I really dislike hardcoding this here, but, as said below, order in dicts isn't
-		-- guaranteed, and we can't use the formats dict keys.
-		formatIds = {"webm-vp8", "webm-vp9", "mp4", "mp4-nvenc", "raw"}
-		formatOpts =
-			possibleValues: [{fId, formats[fId].displayName} for fId in *formatIds]
 
 		-- This could be a dict instead of a array of pairs, but order isn't guaranteed
 		-- by dicts on Lua.
 		@options = {
-			{"output_format", Option("list", "Output Format", options.output_format, formatOpts)}
-			{"twopass", Option("bool", "Two Pass", options.twopass)},
-			{"apply_current_filters", Option("bool", "Apply Current Video Filters", options.apply_current_filters)}
-			{"scale_height", Option("list", "Scale Height", options.scale_height, scaleHeightOpts)},
-			{"strict_filesize_constraint", Option("bool", "Strict Filesize Constraint", options.strict_filesize_constraint)},
-			{"write_filename_on_metadata", Option("bool", "Write Filename on Metadata", options.write_filename_on_metadata)},
-			{"target_filesize", Option("int", "Target Filesize", options.target_filesize, filesizeOpts)},
 			{"crf", Option("int", "CRF", options.crf, crfOpts)}
 		}
 
