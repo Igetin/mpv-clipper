@@ -121,79 +121,78 @@ class Option
 		ass\append(" ▶") if self\hasNext!
 		ass\append("\\N")
 
-class EncodeOptionsPage extends Page
-	new: (callback) =>
-		@callback = callback
-		@currentOption = 1
+-- class EncodeOptionsPage extends Page
+-- 	new: (callback) =>
+-- 		@callback = callback
+-- 		@currentOption = 1
 		
-		crfOpts =
-			step: 1
-			min: -1
-			altDisplayNames:
-				[-1]: "disabled"
+-- 		crfOpts =
+-- 			step: 1
+-- 			min: -1
+-- 			altDisplayNames:
+-- 				[-1]: "disabled"
 
-		profiles = mp.get_property_native('profile-list')
-		profileOpts =
-			possibleValues: [{p['name'], p['profile-desc']} for i, p in ipairs(profiles) when starts_with(p['name'], 'enc-')]
+-- 		profileOpts =
+-- 			possibleValues: [{p['name'], p['profile-desc']} for i, p in ipairs(profiles)]
 
-		-- This could be a dict instead of a array of pairs, but order isn't guaranteed
-		-- by dicts on Lua.
-		@options = {
-			{"encoding_profile", Option("list", "Encoding profile", options.encoding_profile, profileOpts)},
-			{"audio", Option("bool", "Audio", options.audio)},
-			{"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},
-			{"crf", Option("int", "CRF", options.crf, crfOpts)}
-		}
+-- 		-- This could be a dict instead of a array of pairs, but order isn't guaranteed
+-- 		-- by dicts on Lua.
+-- 		@options = {
+-- 			{"encoding_profile", Option("list", "Encoding profile", options.profile, profileOpts)},
+-- 			{"audio", Option("bool", "Audio", options.audio)},
+-- 			{"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},
+-- 			{"crf", Option("int", "CRF", options.crf, crfOpts)}
+-- 		}
 
-		@keybinds =
-			"LEFT": self\leftKey
-			"RIGHT": self\rightKey
-			"UP": self\prevOpt
-			"DOWN": self\nextOpt
-			"ENTER": self\confirmOpts
-			"ESC": self\cancelOpts
+-- 		@keybinds =
+-- 			"LEFT": self\leftKey
+-- 			"RIGHT": self\rightKey
+-- 			"UP": self\prevOpt
+-- 			"DOWN": self\nextOpt
+-- 			"ENTER": self\confirmOpts
+-- 			"ESC": self\cancelOpts
 
-	getCurrentOption: =>
-		return @options[@currentOption][2]
+-- 	getCurrentOption: =>
+-- 		return @options[@currentOption][2]
 
-	leftKey: =>
-		(self\getCurrentOption!)\leftKey!
-		self\draw!
+-- 	leftKey: =>
+-- 		(self\getCurrentOption!)\leftKey!
+-- 		self\draw!
 
-	rightKey: =>
-		(self\getCurrentOption!)\rightKey!
-		self\draw!
+-- 	rightKey: =>
+-- 		(self\getCurrentOption!)\rightKey!
+-- 		self\draw!
 
-	prevOpt: =>
-		@currentOption = math.max(1, @currentOption - 1)
-		self\draw!
+-- 	prevOpt: =>
+-- 		@currentOption = math.max(1, @currentOption - 1)
+-- 		self\draw!
 
-	nextOpt: =>
-		@currentOption = math.min(#@options, @currentOption + 1)
-		self\draw!
+-- 	nextOpt: =>
+-- 		@currentOption = math.min(#@options, @currentOption + 1)
+-- 		self\draw!
 
-	confirmOpts: =>
-		for _, optPair in ipairs @options
-			{optName, opt} = optPair
-			-- Set the global options object.
-			options[optName] = opt\getValue!
-		self\hide!
-		self.callback(true)
+-- 	confirmOpts: =>
+-- 		for _, optPair in ipairs @options
+-- 			{optName, opt} = optPair
+-- 			-- Set the global options object.
+-- 			options[optName] = opt\getValue!
+-- 		self\hide!
+-- 		self.callback(true)
 
-	cancelOpts: =>
-		self\hide!
-		self.callback(false)
+-- 	cancelOpts: =>
+-- 		self\hide!
+-- 		self.callback(false)
 
-	draw: =>
-		window_w, window_h = mp.get_osd_size()
-		ass = assdraw.ass_new()
-		ass\new_event()
-		self\setup_text(ass)
-		ass\append("#{bold('Options:')}\\N\\N")
-		for i, optPair in ipairs @options
-			opt = optPair[2]
-			opt\draw(ass, @currentOption == i)
-		ass\append("\\N▲ / ▼: navigate\\N")
-		ass\append("#{bold('ENTER:')} confirm options\\N")
-		ass\append("#{bold('ESC:')} cancel\\N")
-		mp.set_osd_ass(window_w, window_h, ass.text)
+-- 	draw: =>
+-- 		window_w, window_h = mp.get_osd_size()
+-- 		ass = assdraw.ass_new()
+-- 		ass\new_event()
+-- 		self\setup_text(ass)
+-- 		ass\append("#{bold('Options:')}\\N\\N")
+-- 		for i, optPair in ipairs @options
+-- 			opt = optPair[2]
+-- 			opt\draw(ass, @currentOption == i)
+-- 		ass\append("\\N▲ / ▼: navigate\\N")
+-- 		ass\append("#{bold('ENTER:')} confirm options\\N")
+-- 		ass\append("#{bold('ESC:')} cancel\\N")
+-- 		mp.set_osd_ass(window_w, window_h, ass.text)

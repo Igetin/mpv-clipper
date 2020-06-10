@@ -18,7 +18,7 @@ local options = {
 	-- %S, %E - Start and end time, without milliseconds
 	-- %M - "-audio", if audio is enabled, empty otherwise
 	-- %R - "-(height)p", where height is the video's height, or scale_height, if it's enabled.
-	output_template = "%F-[%s-%e]%M",
+	output_template = "%F-[%s-%e]",
 	-- Scale video to a certain height, keeping the aspect ratio. -1 disables it.
 	scale_height = -1,
 	-- Target filesize, in kB. This will be used to calculate the bitrate
@@ -59,7 +59,7 @@ local options = {
 	font_size = 28,
 	margin = 10,
 	message_duration = 5,
-	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
+	profile = "enc-f-mp4",  -- from default encoding-profiles.conf
 	audio = false,
 	burn_subtitles = false
 }
