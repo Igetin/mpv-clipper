@@ -23,7 +23,7 @@ local options = {
 	-- %S, %E - Start and end time, without milliseconds
 	-- %M - "-audio", if audio is enabled, empty otherwise
 	-- %R - "-(height)p", where height is the video's height, or scale_height, if it's enabled.
-	output_template = "%F-[%s-%e]%M",
+	output_template = "%F-[%s-%e]",
 	-- Scale video to a certain height, keeping the aspect ratio. -1 disables it.
 	scale_height = -1,
 	-- Target filesize, in kB. This will be used to calculate the bitrate
@@ -64,7 +64,7 @@ local options = {
 	font_size = 28,
 	margin = 10,
 	message_duration = 5,
-	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
+	profile = "enc-f-mp4",  -- from default encoding-profiles.conf
 	audio = false,
 	burn_subtitles = false
 }
@@ -149,7 +149,7 @@ file_exists = function(name)
   return false
 end
 local format_filename
-format_filename = function(startTime, endTime, videoFormat)
+format_filename = function(startTime, endTime, extension)
   local replaceTable = {
     ["%%f"] = mp.get_property("filename"),
     ["%%F"] = mp.get_property("filename/no-ext"),
@@ -168,7 +168,7 @@ format_filename = function(startTime, endTime, videoFormat)
   end
   local _
   filename, _ = filename:gsub("[<>:\"/\\|?*]", "")
-  return tostring(filename) .. "." .. tostring(videoFormat.outputExtension)
+  return tostring(filename) .. "." .. tostring(extension)
 end
 local parse_directory
 parse_directory = function(dir)
@@ -497,498 +497,6 @@ make_fullscreen_region = function()
   r:set_from_points(a, b)
   return r
 end
-local read_double
-read_double = function(bytes)
-  local sign = 1
-  local mantissa = bytes[2] % 2 ^ 4
-  for i = 3, 8 do
-    mantissa = mantissa * 256 + bytes[i]
-  end
-  if bytes[1] > 127 then
-    sign = -1
-  end
-  local exponent = (bytes[1] % 128) * 2 ^ 4 + math.floor(bytes[2] / 2 ^ 4)
-  if exponent == 0 then
-    return 0
-  end
-  mantissa = (math.ldexp(mantissa, -52) + 1) * sign
-  return math.ldexp(mantissa, exponent - 1023)
-end
-local write_double
-write_double = function(num)
-  local bytes = {
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-  }
-  if num == 0 then
-    return bytes
-  end
-  local anum = math.abs(num)
-  local mantissa, exponent = math.frexp(anum)
-  exponent = exponent - 1
-  mantissa = mantissa * 2 - 1
-  local sign = num ~= anum and 128 or 0
-  exponent = exponent + 1023
-  bytes[1] = sign + math.floor(exponent / 2 ^ 4)
-  mantissa = mantissa * 2 ^ 4
-  local currentmantissa = math.floor(mantissa)
-  mantissa = mantissa - currentmantissa
-  bytes[2] = (exponent % 2 ^ 4) * 2 ^ 4 + currentmantissa
-  for i = 3, 8 do
-    mantissa = mantissa * 2 ^ 8
-    currentmantissa = math.floor(mantissa)
-    mantissa = mantissa - currentmantissa
-    bytes[i] = currentmantissa
-  end
-  return bytes
-end
-local FirstpassStats
-do
-  local _class_0
-  local duration_multiplier, fields_before_duration, fields_after_duration
-  local _base_0 = {
-    get_duration = function(self)
-      local big_endian_binary_duration = reverse(self.binary_duration)
-      return read_double(reversed_binary_duration) / duration_multiplier
-    end,
-    set_duration = function(self, duration)
-      local big_endian_binary_duration = write_double(duration * duration_multiplier)
-      self.binary_duration = reverse(big_endian_binary_duration)
-    end,
-    _bytes_to_string = function(self, bytes)
-      return string.char(unpack(bytes))
-    end,
-    as_binary_string = function(self)
-      local before_duration_string = self:_bytes_to_string(self.binary_data_before_duration)
-      local duration_string = self:_bytes_to_string(self.binary_duration)
-      local after_duration_string = self:_bytes_to_string(self.binary_data_after_duration)
-      return before_duration_string .. duration_string .. after_duration_string
-    end
-  }
-  _base_0.__index = _base_0
-  _class_0 = setmetatable({
-    __init = function(self, before_duration, duration, after_duration)
-      self.binary_data_before_duration = before_duration
-      self.binary_duration = duration
-      self.binary_data_after_duration = after_duration
-    end,
-    __base = _base_0,
-    __name = "FirstpassStats"
-  }, {
-    __index = _base_0,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  local self = _class_0
-  duration_multiplier = 10000000.0
-  fields_before_duration = 16
-  fields_after_duration = 1
-  self.data_before_duration_size = function(self)
-    return fields_before_duration * 8
-  end
-  self.data_after_duration_size = function(self)
-    return fields_after_duration * 8
-  end
-  self.size = function(self)
-    return (fields_before_duration + 1 + fields_after_duration) * 8
-  end
-  self.from_bytes = function(self, bytes)
-    local before_duration
-    do
-      local _accum_0 = { }
-      local _len_0 = 1
-      local _max_0 = self:data_before_duration_size()
-      for _index_0 = 1, _max_0 < 0 and #bytes + _max_0 or _max_0 do
-        local b = bytes[_index_0]
-        _accum_0[_len_0] = b
-        _len_0 = _len_0 + 1
-      end
-      before_duration = _accum_0
-    end
-    local duration
-    do
-      local _accum_0 = { }
-      local _len_0 = 1
-      local _max_0 = self:data_before_duration_size() + 8
-      for _index_0 = self:data_before_duration_size() + 1, _max_0 < 0 and #bytes + _max_0 or _max_0 do
-        local b = bytes[_index_0]
-        _accum_0[_len_0] = b
-        _len_0 = _len_0 + 1
-      end
-      duration = _accum_0
-    end
-    local after_duration
-    do
-      local _accum_0 = { }
-      local _len_0 = 1
-      for _index_0 = self:data_before_duration_size() + 8 + 1, #bytes do
-        local b = bytes[_index_0]
-        _accum_0[_len_0] = b
-        _len_0 = _len_0 + 1
-      end
-      after_duration = _accum_0
-    end
-    return self(before_duration, duration, after_duration)
-  end
-  FirstpassStats = _class_0
-end
-local read_logfile_into_stats_array
-read_logfile_into_stats_array = function(logfile_path)
-  local file = assert(io.open(logfile_path, "rb"))
-  local logfile_string = base64_decode(file:read())
-  file:close()
-  local stats_size = FirstpassStats:size()
-  assert(logfile_string:len() % stats_size == 0)
-  local stats = { }
-  for offset = 1, #logfile_string, stats_size do
-    local bytes = {
-      logfile_string:byte(offset, offset + stats_size - 1)
-    }
-    assert(#bytes == stats_size)
-    stats[#stats + 1] = FirstpassStats:from_bytes(bytes)
-  end
-  return stats
-end
-local write_stats_array_to_logfile
-write_stats_array_to_logfile = function(stats_array, logfile_path)
-  local file = assert(io.open(logfile_path, "wb"))
-  local logfile_string = ""
-  for _index_0 = 1, #stats_array do
-    local stat = stats_array[_index_0]
-    logfile_string = logfile_string .. stat:as_binary_string()
-  end
-  file:write(base64_encode(logfile_string))
-  return file:close()
-end
-local vp8_patch_logfile
-vp8_patch_logfile = function(logfile_path, encode_total_duration)
-  local stats_array = read_logfile_into_stats_array(logfile_path)
-  local average_duration = encode_total_duration / (#stats_array - 1)
-  for i = 1, #stats_array - 1 do
-    stats_array[i]:set_duration(average_duration)
-  end
-  stats_array[#stats_array]:set_duration(encode_total_duration)
-  return write_stats_array_to_logfile(stats_array, logfile_path)
-end
-local formats = { }
-local Format
-do
-  local _class_0
-  local _base_0 = {
-    getPreFilters = function(self)
-      return { }
-    end,
-    getPostFilters = function(self)
-      return { }
-    end,
-    getFlags = function(self)
-      return { }
-    end
-  }
-  _base_0.__index = _base_0
-  _class_0 = setmetatable({
-    __init = function(self)
-      self.displayName = "Basic"
-      self.supportsTwopass = true
-      self.videoCodec = ""
-      self.audioCodec = ""
-      self.outputExtension = ""
-      self.acceptsBitrate = true
-    end,
-    __base = _base_0,
-    __name = "Format"
-  }, {
-    __index = _base_0,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  Format = _class_0
-end
-local RawVideo
-do
-  local _class_0
-  local _parent_0 = Format
-  local _base_0 = {
-    getColorspace = function(self)
-      local csp = mp.get_property("colormatrix")
-      local _exp_0 = csp
-      if "bt.601" == _exp_0 then
-        return "bt601"
-      elseif "bt.709" == _exp_0 then
-        return "bt709"
-      elseif "bt.2020" == _exp_0 then
-        return "bt2020"
-      elseif "smpte-240m" == _exp_0 then
-        return "smpte240m"
-      else
-        msg.info("Warning, unknown colorspace " .. tostring(csp) .. " detected, using bt.601.")
-        return "bt601"
-      end
-    end,
-    getPostFilters = function(self)
-      return {
-        "format=yuv444p16",
-        "lavfi-scale=in_color_matrix=" .. self:getColorspace(),
-        "format=bgr24"
-      }
-    end
-  }
-  _base_0.__index = _base_0
-  setmetatable(_base_0, _parent_0.__base)
-  _class_0 = setmetatable({
-    __init = function(self)
-      self.displayName = "Raw"
-      self.supportsTwopass = false
-      self.videoCodec = "rawvideo"
-      self.audioCodec = "pcm_s16le"
-      self.outputExtension = "avi"
-      self.acceptsBitrate = false
-    end,
-    __base = _base_0,
-    __name = "RawVideo",
-    __parent = _parent_0
-  }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil then
-        local parent = rawget(cls, "__parent")
-        if parent then
-          return parent[name]
-        end
-      else
-        return val
-      end
-    end,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  if _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
-  RawVideo = _class_0
-end
-formats["raw"] = RawVideo()
-local WebmVP8
-do
-  local _class_0
-  local _parent_0 = Format
-  local _base_0 = {
-    getPreFilters = function(self)
-      local colormatrixFilter = {
-        ["bt.709"] = "bt709",
-        ["bt.2020"] = "bt2020",
-        ["smpte-240m"] = "smpte240m"
-      }
-      local ret = { }
-      local colormatrix = mp.get_property_native("video-params/colormatrix")
-      if colormatrixFilter[colormatrix] then
-        append(ret, {
-          "lavfi-colormatrix=" .. tostring(colormatrixFilter[colormatrix]) .. ":bt601"
-        })
-      end
-      return ret
-    end,
-    getFlags = function(self)
-      return {
-        "--ovcopts-add=threads=" .. tostring(options.libvpx_threads)
-      }
-    end
-  }
-  _base_0.__index = _base_0
-  setmetatable(_base_0, _parent_0.__base)
-  _class_0 = setmetatable({
-    __init = function(self)
-      self.displayName = "WebM"
-      self.supportsTwopass = true
-      self.videoCodec = "libvpx"
-      self.audioCodec = "libvorbis"
-      self.outputExtension = "webm"
-      self.acceptsBitrate = true
-    end,
-    __base = _base_0,
-    __name = "WebmVP8",
-    __parent = _parent_0
-  }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil then
-        local parent = rawget(cls, "__parent")
-        if parent then
-          return parent[name]
-        end
-      else
-        return val
-      end
-    end,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  if _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
-  WebmVP8 = _class_0
-end
-formats["webm-vp8"] = WebmVP8()
-local WebmVP9
-do
-  local _class_0
-  local _parent_0 = Format
-  local _base_0 = {
-    getFlags = function(self)
-      return {
-        "--ovcopts-add=threads=" .. tostring(options.libvpx_threads)
-      }
-    end
-  }
-  _base_0.__index = _base_0
-  setmetatable(_base_0, _parent_0.__base)
-  _class_0 = setmetatable({
-    __init = function(self)
-      self.displayName = "WebM (VP9)"
-      self.supportsTwopass = true
-      self.videoCodec = "libvpx-vp9"
-      self.audioCodec = "libvorbis"
-      self.outputExtension = "webm"
-      self.acceptsBitrate = true
-    end,
-    __base = _base_0,
-    __name = "WebmVP9",
-    __parent = _parent_0
-  }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil then
-        local parent = rawget(cls, "__parent")
-        if parent then
-          return parent[name]
-        end
-      else
-        return val
-      end
-    end,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  if _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
-  WebmVP9 = _class_0
-end
-formats["webm-vp9"] = WebmVP9()
-local MP4
-do
-  local _class_0
-  local _parent_0 = Format
-  local _base_0 = { }
-  _base_0.__index = _base_0
-  setmetatable(_base_0, _parent_0.__base)
-  _class_0 = setmetatable({
-    __init = function(self)
-      self.displayName = "MP4 (h264/AAC)"
-      self.supportsTwopass = true
-      self.videoCodec = "libx264"
-      self.audioCodec = "aac"
-      self.outputExtension = "mp4"
-      self.acceptsBitrate = true
-    end,
-    __base = _base_0,
-    __name = "MP4",
-    __parent = _parent_0
-  }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil then
-        local parent = rawget(cls, "__parent")
-        if parent then
-          return parent[name]
-        end
-      else
-        return val
-      end
-    end,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  if _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
-  MP4 = _class_0
-end
-formats["mp4"] = MP4()
-local MP4NVENC
-do
-  local _class_0
-  local _parent_0 = Format
-  local _base_0 = { }
-  _base_0.__index = _base_0
-  setmetatable(_base_0, _parent_0.__base)
-  _class_0 = setmetatable({
-    __init = function(self)
-      self.displayName = "MP4 (h264-NVENC/AAC)"
-      self.supportsTwopass = true
-      self.videoCodec = "h264_nvenc"
-      self.audioCodec = "aac"
-      self.outputExtension = "mp4"
-      self.acceptsBitrate = true
-    end,
-    __base = _base_0,
-    __name = "MP4NVENC",
-    __parent = _parent_0
-  }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil then
-        local parent = rawget(cls, "__parent")
-        if parent then
-          return parent[name]
-        end
-      else
-        return val
-      end
-    end,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  if _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
-  MP4NVENC = _class_0
-end
-formats["mp4-nvenc"] = MP4NVENC()
 local Page
 do
   local _class_0
@@ -1353,7 +861,6 @@ apply_current_filters = function(filters)
 end
 local encode
 encode = function(region, startTime, endTime)
-  local format = formats[options.output_format]
   local path = mp.get_property("path")
   if not path then
     message("No file is being played")
@@ -1365,113 +872,21 @@ encode = function(region, startTime, endTime)
     path,
     "--start=" .. seconds_to_time_string(startTime, false, true),
     "--end=" .. seconds_to_time_string(endTime, false, true),
-    "--ovc=" .. tostring(format.videoCodec),
-    "--oac=" .. tostring(format.audioCodec),
+    "--profile=" .. tostring(options.profile),
     "--loop-file=no"
   }
-  local active_tracks = get_active_tracks()
-  for track_type, tracks in pairs(active_tracks) do
-    if track_type == "audio" then
-      append_audio_tracks(command, tracks)
-    else
-      for _index_0 = 1, #tracks do
-        local track = tracks[_index_0]
-        append_track(command, track)
-      end
-    end
-  end
-  for track_type, tracks in pairs(active_tracks) do
-    local _continue_0 = false
-    repeat
-      if #tracks > 0 then
-        _continue_0 = true
-        break
-      end
-      local _exp_0 = track_type
-      if "video" == _exp_0 then
-        append(command, {
-          "--vid=no"
-        })
-      elseif "audio" == _exp_0 then
-        append(command, {
-          "--aid=no"
-        })
-      elseif "sub" == _exp_0 then
-        append(command, {
-          "--sid=no"
-        })
-      end
-      _continue_0 = true
-    until true
-    if not _continue_0 then
-      break
-    end
-  end
-  append(command, get_playback_options())
   local filters = { }
-  append(filters, format:getPreFilters())
-  if options.apply_current_filters then
-    apply_current_filters(filters)
-  end
   if region and region:is_valid() then
     append(filters, {
       "lavfi-crop=" .. tostring(region.w) .. ":" .. tostring(region.h) .. ":" .. tostring(region.x) .. ":" .. tostring(region.y)
     })
   end
-  append(filters, get_scale_filters())
-  append(filters, format:getPostFilters())
-  for _index_0 = 1, #filters do
-    local f = filters[_index_0]
-    append(command, {
-      "--vf-add=" .. tostring(f)
-    })
-  end
-  append(command, get_speed_flags())
-  append(command, format:getFlags())
   if options.write_filename_on_metadata then
     append(command, get_metadata_flags())
   end
-  if options.target_filesize > 0 and format.acceptsBitrate then
-    local dT = endTime - startTime
-    if options.strict_filesize_constraint then
-      local video_kilobits = options.target_filesize * 8
-      if #active_tracks["audio"] > 0 then
-        video_kilobits = video_kilobits - dT * options.strict_audio_bitrate
-        append(command, {
-          "--oacopts-add=b=" .. tostring(options.strict_audio_bitrate) .. "k"
-        })
-      end
-      video_kilobits = video_kilobits * options.strict_bitrate_multiplier
-      local bitrate = math.floor(video_kilobits / dT)
-      append(command, {
-        "--ovcopts-add=b=" .. tostring(bitrate) .. "k",
-        "--ovcopts-add=minrate=" .. tostring(bitrate) .. "k",
-        "--ovcopts-add=maxrate=" .. tostring(bitrate) .. "k"
-      })
-    else
-      local bitrate = math.floor(options.target_filesize * 8 / dT)
-      append(command, {
-        "--ovcopts-add=b=" .. tostring(bitrate) .. "k"
-      })
-    end
-  elseif options.target_filesize <= 0 and format.acceptsBitrate then
-    append(command, {
-      "--ovcopts-add=b=0"
-    })
-  end
-  for token in string.gmatch(options.additional_flags, "[^%s]+") do
-    command[#command + 1] = token
-  end
-  if not options.strict_filesize_constraint then
-    for token in string.gmatch(options.non_strict_additional_flags, "[^%s]+") do
-      command[#command + 1] = token
-    end
-    if options.crf >= 0 then
-      append(command, {
-        "--ovcopts-add=crf=" .. tostring(options.crf)
-      })
-    end
-  end
+  append(command, {
+    "--ovcopts-add=crf=" .. tostring(options.crf)
+  })
   local dir = ""
   if is_stream then
     dir = parse_directory("~")
@@ -1482,44 +897,40 @@ encode = function(region, startTime, endTime)
   if options.output_directory ~= "" then
     dir = parse_directory(options.output_directory)
   end
-  local formatted_filename = format_filename(startTime, endTime, format)
+  local profiles = mp.get_property_native('profile-list')
+  local extension
+  for i, p in ipairs(profiles) do
+    local _continue_0 = false
+    repeat
+      if p['name'] ~= options.profile then
+        _continue_0 = true
+        break
+      end
+      for i, o in ipairs(p['options']) do
+        local _continue_1 = false
+        repeat
+          if o['key'] ~= 'of' then
+            _continue_1 = true
+            break
+          end
+          extension = o['value']
+          _continue_1 = true
+        until true
+        if not _continue_1 then
+          break
+        end
+      end
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
+  end
+  local formatted_filename = format_filename(startTime, endTime, extension)
   local out_path = utils.join_path(dir, formatted_filename)
   append(command, {
     "--o=" .. tostring(out_path)
   })
-  if options.twopass and format.supportsTwopass and not is_stream then
-    local first_pass_cmdline
-    do
-      local _accum_0 = { }
-      local _len_0 = 1
-      for _index_0 = 1, #command do
-        local arg = command[_index_0]
-        _accum_0[_len_0] = arg
-        _len_0 = _len_0 + 1
-      end
-      first_pass_cmdline = _accum_0
-    end
-    append(first_pass_cmdline, {
-      "--ovcopts-add=flags=+pass1"
-    })
-    message("Starting first pass...")
-    msg.verbose("First-pass command line: ", table.concat(first_pass_cmdline, " "))
-    local res = run_subprocess({
-      args = first_pass_cmdline,
-      cancellable = false
-    })
-    if not res then
-      message("First pass failed! Check the logs for details.")
-      return 
-    end
-    append(command, {
-      "--ovcopts-add=flags=+pass2"
-    })
-    if format.videoCodec == "libvpx" then
-      msg.verbose("Patching libvpx pass log file...")
-      vp8_patch_logfile(get_pass_logfile_path(out_path), endTime - startTime)
-    end
-  end
   msg.info("Encoding to", out_path)
   msg.verbose("Command line:", table.concat(command, " "))
   if options.run_detached then
@@ -1864,179 +1275,6 @@ do
   _base_0.__class = _class_0
   Option = _class_0
 end
-local EncodeOptionsPage
-do
-  local _class_0
-  local _parent_0 = Page
-  local _base_0 = {
-    getCurrentOption = function(self)
-      return self.options[self.currentOption][2]
-    end,
-    leftKey = function(self)
-      (self:getCurrentOption()):leftKey()
-      return self:draw()
-    end,
-    rightKey = function(self)
-      (self:getCurrentOption()):rightKey()
-      return self:draw()
-    end,
-    prevOpt = function(self)
-      self.currentOption = math.max(1, self.currentOption - 1)
-      return self:draw()
-    end,
-    nextOpt = function(self)
-      self.currentOption = math.min(#self.options, self.currentOption + 1)
-      return self:draw()
-    end,
-    confirmOpts = function(self)
-      for _, optPair in ipairs(self.options) do
-        local optName, opt
-        optName, opt = optPair[1], optPair[2]
-        options[optName] = opt:getValue()
-      end
-      self:hide()
-      return self.callback(true)
-    end,
-    cancelOpts = function(self)
-      self:hide()
-      return self.callback(false)
-    end,
-    draw = function(self)
-      local window_w, window_h = mp.get_osd_size()
-      local ass = assdraw.ass_new()
-      ass:new_event()
-      self:setup_text(ass)
-      ass:append(tostring(bold('Options:')) .. "\\N\\N")
-      for i, optPair in ipairs(self.options) do
-        local opt = optPair[2]
-        opt:draw(ass, self.currentOption == i)
-      end
-      ass:append("\\N▲ / ▼: navigate\\N")
-      ass:append(tostring(bold('ENTER:')) .. " confirm options\\N")
-      ass:append(tostring(bold('ESC:')) .. " cancel\\N")
-      return mp.set_osd_ass(window_w, window_h, ass.text)
-    end
-  }
-  _base_0.__index = _base_0
-  setmetatable(_base_0, _parent_0.__base)
-  _class_0 = setmetatable({
-    __init = function(self, callback)
-      self.callback = callback
-      self.currentOption = 1
-      local crfOpts = {
-        step = 1,
-        min = -1,
-        altDisplayNames = {
-          [-1] = "disabled"
-        }
-      }
-      local profiles = mp.get_property_native('profile-list')
-      local profileOpts = {
-        possibleValues = (function()
-          local _accum_0 = { }
-          local _len_0 = 1
-          for i, p in ipairs(profiles) do
-            if starts_with(p['name'], 'enc-') then
-              _accum_0[_len_0] = {
-                p['name'],
-                p['profile-desc']
-              }
-              _len_0 = _len_0 + 1
-            end
-          end
-          return _accum_0
-        end)()
-      }
-      self.options = {
-        {
-          "encoding_profile",
-          Option("list", "Encoding profile", options.encoding_profile, profileOpts)
-        },
-        {
-          "audio",
-          Option("bool", "Audio", options.audio)
-        },
-        {
-          "burn_subtitles",
-          Option("bool", "Burn subtitles", options.burn_subtitles)
-        },
-        {
-          "crf",
-          Option("int", "CRF", options.crf, crfOpts)
-        }
-      }
-      self.keybinds = {
-        ["LEFT"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.leftKey
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
-        ["RIGHT"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.rightKey
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
-        ["UP"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.prevOpt
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
-        ["DOWN"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.nextOpt
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
-        ["ENTER"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.confirmOpts
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
-        ["ESC"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.cancelOpts
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)()
-      }
-    end,
-    __base = _base_0,
-    __name = "EncodeOptionsPage",
-    __parent = _parent_0
-  }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil then
-        local parent = rawget(cls, "__parent")
-        if parent then
-          return parent[name]
-        end
-      else
-        return val
-      end
-    end,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  if _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
-  EncodeOptionsPage = _class_0
-end
 local PreviewPage
 do
   local _class_0
@@ -2142,6 +1380,16 @@ do
   local _class_0
   local _parent_0 = Page
   local _base_0 = {
+    leftKey = function(self)
+      self.profile:leftKey()
+      self:draw()
+      options['profile'] = self.profile:getValue()
+    end,
+    rightKey = function(self)
+      self.profile:rightKey()
+      self:draw()
+      options['profile'] = self.profile:getValue()
+    end,
     setStartTime = function(self)
       self.startTime = mp.get_property_number("time-pos")
       if self.visible then
@@ -2170,15 +1418,16 @@ do
       end
     end,
     draw = function(self)
+      msg.info('BLÖÖÖÖÖÖÖÖÖÖ')
       local window_w, window_h = mp.get_osd_size()
       local ass = assdraw.ass_new()
       ass:new_event()
       self:setup_text(ass)
       ass:append(tostring(bold('WebM maker')) .. "\\N\\N")
+      self.profile:draw(ass, true)
       ass:append(tostring(bold('c:')) .. " crop\\N")
       ass:append(tostring(bold('1:')) .. " set start time (current is " .. tostring(seconds_to_time_string(self.startTime)) .. ")\\N")
       ass:append(tostring(bold('2:')) .. " set end time (current is " .. tostring(seconds_to_time_string(self.endTime)) .. ")\\N")
-      ass:append(tostring(bold('o:')) .. " change encode options\\N")
       ass:append(tostring(bold('p:')) .. " preview\\N")
       ass:append(tostring(bold('e:')) .. " encode\\N\\N")
       ass:append(tostring(bold('ESC:')) .. " close\\N")
@@ -2200,20 +1449,6 @@ do
         end
       end)(), self.region)
       return cropPage:show()
-    end,
-    onOptionsChanged = function(self, updated)
-      return self:show()
-    end,
-    changeOptions = function(self)
-      self:hide()
-      local encodeOptsPage = EncodeOptionsPage((function()
-        local _base_1 = self
-        local _fn_0 = _base_1.onOptionsChanged
-        return function(...)
-          return _fn_0(_base_1, ...)
-        end
-      end)())
-      return encodeOptsPage:show()
     end,
     onPreviewEnded = function(self)
       return self:show()
@@ -2251,6 +1486,20 @@ do
   _class_0 = setmetatable({
     __init = function(self)
       self.keybinds = {
+        ["LEFT"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.leftKey
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["RIGHT"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.rightKey
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
         ["c"] = (function()
           local _base_1 = self
           local _fn_0 = _base_1.crop
@@ -2268,13 +1517,6 @@ do
         ["2"] = (function()
           local _base_1 = self
           local _fn_0 = _base_1.setEndTime
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
-        ["o"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.changeOptions
           return function(...)
             return _fn_0(_base_1, ...)
           end
@@ -2304,6 +1546,21 @@ do
       self.startTime = -1
       self.endTime = -1
       self.region = Region()
+      local profileOpts = {
+        possibleValues = (function()
+          local _accum_0 = { }
+          local _len_0 = 1
+          for i, p in ipairs(mp.get_property_native('profile-list')) do
+            _accum_0[_len_0] = {
+              p['name'],
+              p['profile-desc']
+            }
+            _len_0 = _len_0 + 1
+          end
+          return _accum_0
+        end)()
+      }
+      self.profile = Option("list", "Encoding profile", options.profile, profileOpts)
     end,
     __base = _base_0,
     __name = "MainPage",

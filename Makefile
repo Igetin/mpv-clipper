@@ -5,11 +5,11 @@ LUASOURCES += src/base64.lua
 
 SOURCES += src/util.moon
 SOURCES += src/video_to_screen.moon
-SOURCES += src/vp8_twopass_log_patcher.moon
-SOURCES += src/formats/base.moon
-SOURCES += src/formats/rawvideo.moon
-SOURCES += src/formats/webm.moon
-SOURCES += src/formats/mp4.moon
+#SOURCES += src/vp8_twopass_log_patcher.moon
+#SOURCES += src/formats/base.moon
+#SOURCES += src/formats/rawvideo.moon
+#SOURCES += src/formats/webm.moon
+#SOURCES += src/formats/mp4.moon
 SOURCES += src/Page.moon
 SOURCES += src/EncodeWithProgress.moon
 SOURCES += src/encode.moon
