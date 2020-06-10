@@ -36,7 +36,7 @@ file_exists = (name) ->
 		return true
 	return false
 
-format_filename = (startTime, endTime, videoFormat) ->
+format_filename = (startTime, endTime, extension) ->
 	replaceTable =
 		"%%f": mp.get_property("filename")
 		"%%F": mp.get_property("filename/no-ext")
@@ -57,7 +57,7 @@ format_filename = (startTime, endTime, videoFormat) ->
 	-- Linux: /
 	filename, _ = filename\gsub("[<>:\"/\\|?*]", "")
 
-	return "#{filename}.#{videoFormat.outputExtension}"
+	return "#{filename}.#{extension}"
 
 parse_directory = (dir) ->
 	home_dir = os.getenv("HOME")

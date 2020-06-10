@@ -126,7 +126,7 @@ apply_current_filters = (filters) ->
 		append(filters, {str})
 
 encode = (region, startTime, endTime) ->
-	format = formats[options.output_format]
+	-- format = formats[options.output_format]
 
 	path = mp.get_property("path")
 	if not path
@@ -139,101 +139,105 @@ encode = (region, startTime, endTime) ->
 		"mpv", path,
 		"--start=" .. seconds_to_time_string(startTime, false, true),
 		"--end=" .. seconds_to_time_string(endTime, false, true),
-		"--ovc=#{format.videoCodec}", "--oac=#{format.audioCodec}",
+		"--profile=#{options.profile}",
 		-- When loop-file=inf, the encode won't end. Set this to override.
 		"--loop-file=no"
 	}
 
-	active_tracks = get_active_tracks!
-	for track_type, tracks in pairs active_tracks
-		if track_type == "audio"
-			append_audio_tracks(command, tracks)
-		else
-			for track in *tracks
-				append_track(command, track)
+	-- active_tracks = get_active_tracks!
+	-- for track_type, tracks in pairs active_tracks
+	-- 	if track_type == "audio"
+	-- 		append_audio_tracks(command, tracks)
+	-- 	else
+	-- 		for track in *tracks
+	-- 			append_track(command, track)
 	
-	for track_type, tracks in pairs active_tracks
-		if #tracks > 0
-			continue
-		switch track_type
-			when "video"
-				append(command, {"--vid=no"})
-			when "audio"
-				append(command, {"--aid=no"})
-			when "sub"
-				append(command, {"--sid=no"})
+	-- for track_type, tracks in pairs active_tracks
+	-- 	if #tracks > 0
+	-- 		continue
+	-- 	switch track_type
+	-- 		when "video"
+	-- 			append(command, {"--vid=no"})
+	-- 		when "audio"
+	-- 			append(command, {"--aid=no"})
+	-- 		when "sub"
+	-- 			append(command, {"--sid=no"})
 
-	append(command, get_playback_options!)
+	-- append(command, get_playback_options!)
 
 	filters = {}
-	append(filters, format\getPreFilters!)
+	-- append(filters, format\getPreFilters!)
 
-	if options.apply_current_filters
-		apply_current_filters(filters)
+	-- if options.apply_current_filters
+	-- 	apply_current_filters(filters)
 
 	if region and region\is_valid!
 		append(filters, {"lavfi-crop=#{region.w}:#{region.h}:#{region.x}:#{region.y}"})
 
-	append(filters, get_scale_filters!)
+	-- append(filters, get_scale_filters!)
 
-	append(filters, format\getPostFilters!)
+	-- append(filters, format\getPostFilters!)
 
-	for f in *filters
-		append(command, {
-			"--vf-add=#{f}"
-		})
+	-- for f in *filters
+	-- 	append(command, {
+	-- 		"--vf-add=#{f}"
+	-- 	})
 
-	append(command, get_speed_flags!)
+	-- append(command, get_speed_flags!)
 
-	append(command, format\getFlags!)
+	-- append(command, format\getFlags!)
 
 	if options.write_filename_on_metadata
 		append(command, get_metadata_flags!)
 
-	if options.target_filesize > 0 and format.acceptsBitrate
-		dT = endTime - startTime
-		if options.strict_filesize_constraint
-			-- Calculate video bitrate, assume audio is constant.
-			video_kilobits = options.target_filesize * 8
-			if #active_tracks["audio"] > 0 -- compensate for audio
-				video_kilobits = video_kilobits - dT * options.strict_audio_bitrate
-				append(command, {
-					"--oacopts-add=b=#{options.strict_audio_bitrate}k"
-				})
-			video_kilobits *= options.strict_bitrate_multiplier
-			bitrate = math.floor(video_kilobits / dT)
-			append(command, {
-				"--ovcopts-add=b=#{bitrate}k",
-				"--ovcopts-add=minrate=#{bitrate}k",
-				"--ovcopts-add=maxrate=#{bitrate}k",
-			})
-		else
-			-- Loosely set the video bitrate.
-			bitrate = math.floor(options.target_filesize * 8 / dT)
-			append(command, {
-				"--ovcopts-add=b=#{bitrate}k"
-			})
-	elseif options.target_filesize <= 0 and format.acceptsBitrate
-		-- set video bitrate to 0. This might enable constant quality, or some
-		-- other encoding modes, depending on the codec.
-		append(command, {
-			"--ovcopts-add=b=0"
-		})
+	-- if options.target_filesize > 0 and format.acceptsBitrate
+	-- 	dT = endTime - startTime
+	-- 	if options.strict_filesize_constraint
+	-- 		-- Calculate video bitrate, assume audio is constant.
+	-- 		video_kilobits = options.target_filesize * 8
+	-- 		if #active_tracks["audio"] > 0 -- compensate for audio
+	-- 			video_kilobits = video_kilobits - dT * options.strict_audio_bitrate
+	-- 			append(command, {
+	-- 				"--oacopts-add=b=#{options.strict_audio_bitrate}k"
+	-- 			})
+	-- 		video_kilobits *= options.strict_bitrate_multiplier
+	-- 		bitrate = math.floor(video_kilobits / dT)
+	-- 		append(command, {
+	-- 			"--ovcopts-add=b=#{bitrate}k",
+	-- 			"--ovcopts-add=minrate=#{bitrate}k",
+	-- 			"--ovcopts-add=maxrate=#{bitrate}k",
+	-- 		})
+	-- 	else
+	-- 		-- Loosely set the video bitrate.
+	-- 		bitrate = math.floor(options.target_filesize * 8 / dT)
+	-- 		append(command, {
+	-- 			"--ovcopts-add=b=#{bitrate}k"
+	-- 		})
+	-- elseif options.target_filesize <= 0 and format.acceptsBitrate
+	-- 	-- set video bitrate to 0. This might enable constant quality, or some
+	-- 	-- other encoding modes, depending on the codec.
+	-- 	append(command, {
+	-- 		"--ovcopts-add=b=0"
+	-- 	})
 
 	-- split the user-passed settings on whitespace
-	for token in string.gmatch(options.additional_flags, "[^%s]+") do
-		command[#command + 1] = token
+	-- for token in string.gmatch(options.additional_flags, "[^%s]+") do
+	-- 	command[#command + 1] = token
 
-	if not options.strict_filesize_constraint
-		for token in string.gmatch(options.non_strict_additional_flags, "[^%s]+") do
-			command[#command + 1] = token
+	append(command, {
+		"--ovcopts-add=crf=#{options.crf}"
+	})
+
+	-- if not options.strict_filesize_constraint
+	-- 	for token in string.gmatch(options.non_strict_additional_flags, "[^%s]+") do
+	-- 		command[#command + 1] = token
 		
-		-- Also add CRF here, as it used to be a part of the non-strict flags.
-		-- This might change in the future, I don't know.
-		if options.crf >= 0
-			append(command, {
-				"--ovcopts-add=crf=#{options.crf}"
-			})
+	-- 	-- Also add CRF here, as it used to be a part of the non-strict flags.
+	-- 	-- This might change in the future, I don't know.
+	-- 	if options.crf >= 0
+	-- 		append(command, {
+	-- 			"--ovcopts-add=crf=#{options.crf}"
+	-- 		})
 
 	dir = ""
 	if is_stream
@@ -244,34 +248,42 @@ encode = (region, startTime, endTime) ->
 	if options.output_directory != ""
 		dir = parse_directory(options.output_directory)
 
-	formatted_filename = format_filename(startTime, endTime, format)
+	profiles = mp.get_property_native('profile-list')
+	local extension
+	for i, p in ipairs(profiles)
+		continue if p['name'] != options.profile
+		for i, o in ipairs(p['options'])
+			continue if o['key'] != 'of' -- output format
+			extension = o['value']
+
+	formatted_filename = format_filename(startTime, endTime, extension)
 	out_path = utils.join_path(dir, formatted_filename)
 	append(command, {"--o=#{out_path}"})
 
 	-- Do the first pass now, as it won't require the output path. I don't think this works on streams.
 	-- Also this will ignore run_detached, at least for the first pass.
-	if options.twopass and format.supportsTwopass and not is_stream
-		-- copy the commandline
-		first_pass_cmdline = [arg for arg in *command]
-		append(first_pass_cmdline, {
-			"--ovcopts-add=flags=+pass1"
-		})
-		message("Starting first pass...")
-		msg.verbose("First-pass command line: ", table.concat(first_pass_cmdline, " "))
-		res = run_subprocess({args: first_pass_cmdline, cancellable: false})
-		if not res
-			message("First pass failed! Check the logs for details.")
-			return
+	-- if options.twopass and format.supportsTwopass and not is_stream
+	-- 	-- copy the commandline
+	-- 	first_pass_cmdline = [arg for arg in *command]
+	-- 	append(first_pass_cmdline, {
+	-- 		"--ovcopts-add=flags=+pass1"
+	-- 	})
+	-- 	message("Starting first pass...")
+	-- 	msg.verbose("First-pass command line: ", table.concat(first_pass_cmdline, " "))
+	-- 	res = run_subprocess({args: first_pass_cmdline, cancellable: false})
+	-- 	if not res
+	-- 		message("First pass failed! Check the logs for details.")
+	-- 		return
 		
-		-- set the second pass flag on the final encode command
-		append(command, {
-			"--ovcopts-add=flags=+pass2"
-		})
+	-- 	-- set the second pass flag on the final encode command
+	-- 	append(command, {
+	-- 		"--ovcopts-add=flags=+pass2"
+	-- 	})
 
-		if format.videoCodec == "libvpx"
-			-- We need to patch the pass log file before running the second pass.
-			msg.verbose("Patching libvpx pass log file...")
-			vp8_patch_logfile(get_pass_logfile_path(out_path), endTime - startTime)
+	-- 	if format.videoCodec == "libvpx"
+	-- 		-- We need to patch the pass log file before running the second pass.
+	-- 		msg.verbose("Patching libvpx pass log file...")
+	-- 		vp8_patch_logfile(get_pass_logfile_path(out_path), endTime - startTime)
 
 	msg.info("Encoding to", out_path)
 	msg.verbose("Command line:", table.concat(command, " "))
