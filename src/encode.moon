@@ -165,7 +165,7 @@ encode = (region, startTime, endTime) ->
 
 	-- append(command, get_playback_options!)
 
-	filters = {}
+	-- filters = {}
 	-- append(filters, format\getPreFilters!)
 
 	-- if options.apply_current_filters
