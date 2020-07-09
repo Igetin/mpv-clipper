@@ -1,6 +1,6 @@
 # HACK
 
-This is a quick & dirty hack that removes all encoding options and instead lets you choose an encoding profile from the main page. Cropping probably doesn’t work yet.
+This is a quick & dirty hack that removes all encoding options and instead lets you choose an encoding profile from the main page.
 
 # mpv-webm
 Simple WebM maker for [mpv][mpv], with no external dependencies.
