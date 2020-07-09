@@ -53,7 +53,7 @@ local options = {
 	additional_flags = "",
 	-- Constant Rate Factor (CRF). The value meaning and limits may change,
 	-- from codec to codec. Set to -1 to disable.
-	crf = 10,
+	crf = 15,
 	-- Useful for flags that may impact output filesize, such as qmin, qmax etc
 	-- Won't be applied when strict_filesize_constraint is on.
 	non_strict_additional_flags = "",
@@ -859,6 +859,20 @@ apply_current_filters = function(filters)
     end
   end
 end
+local encoding_profiles
+do
+  local _accum_0 = { }
+  local _len_0 = 1
+  local _list_0 = (mp.get_property_native('profile-list'))
+  for _index_0 = 1, #_list_0 do
+    local p = _list_0[_index_0]
+    if starts_with(p['name'], 'enc-') then
+      _accum_0[_len_0] = p
+      _len_0 = _len_0 + 1
+    end
+  end
+  encoding_profiles = _accum_0
+end
 local encode
 encode = function(region, startTime, endTime)
   local path = mp.get_property("path")
@@ -872,7 +886,7 @@ encode = function(region, startTime, endTime)
     path,
     "--start=" .. seconds_to_time_string(startTime, false, true),
     "--end=" .. seconds_to_time_string(endTime, false, true),
-    "--profile=" .. tostring(options.profile),
+    "--profile=" .. tostring(options.encoding_profile),
     "--loop-file=no"
   }
   if region and region:is_valid() then
@@ -883,6 +897,9 @@ encode = function(region, startTime, endTime)
   if options.write_filename_on_metadata then
     append(command, get_metadata_flags())
   end
+  append(command, {
+    "--ovcopts-add=crf=" .. tostring(options.crf)
+  })
   local dir = ""
   if is_stream then
     dir = parse_directory("~")
@@ -893,12 +910,11 @@ encode = function(region, startTime, endTime)
   if options.output_directory ~= "" then
     dir = parse_directory(options.output_directory)
   end
-  local profiles = mp.get_property_native('profile-list')
   local extension
-  for i, p in ipairs(profiles) do
+  for i, p in ipairs(encoding_profiles) do
     local _continue_0 = false
     repeat
-      if p['name'] ~= options.profile then
+      if p['name'] ~= options.encoding_profile then
         _continue_0 = true
         break
       end
@@ -938,7 +954,6 @@ encode = function(region, startTime, endTime)
     local res = false
     if not should_display_progress() then
       message("Started encode...")
-      msg.info(command)
       res = run_subprocess({
         args = command,
         cancellable = false
@@ -1272,6 +1287,169 @@ do
   _base_0.__class = _class_0
   Option = _class_0
 end
+local EncodeOptionsPage
+do
+  local _class_0
+  local _parent_0 = Page
+  local _base_0 = {
+    getCurrentOption = function(self)
+      return self.options[self.currentOption][2]
+    end,
+    leftKey = function(self)
+      (self:getCurrentOption()):leftKey()
+      return self:draw()
+    end,
+    rightKey = function(self)
+      (self:getCurrentOption()):rightKey()
+      return self:draw()
+    end,
+    prevOpt = function(self)
+      self.currentOption = math.max(1, self.currentOption - 1)
+      return self:draw()
+    end,
+    nextOpt = function(self)
+      self.currentOption = math.min(#self.options, self.currentOption + 1)
+      return self:draw()
+    end,
+    confirmOpts = function(self)
+      for _, optPair in ipairs(self.options) do
+        local optName, opt
+        optName, opt = optPair[1], optPair[2]
+        options[optName] = opt:getValue()
+      end
+      self:hide()
+      return self.callback(true)
+    end,
+    cancelOpts = function(self)
+      self:hide()
+      return self.callback(false)
+    end,
+    draw = function(self)
+      local window_w, window_h = mp.get_osd_size()
+      local ass = assdraw.ass_new()
+      ass:new_event()
+      self:setup_text(ass)
+      ass:append(tostring(bold('Options:')) .. "\\N\\N")
+      for i, optPair in ipairs(self.options) do
+        local opt = optPair[2]
+        opt:draw(ass, self.currentOption == i)
+      end
+      ass:append("\\N▲ / ▼: navigate\\N")
+      ass:append(tostring(bold('ENTER:')) .. " confirm options\\N")
+      ass:append(tostring(bold('ESC:')) .. " cancel\\N")
+      return mp.set_osd_ass(window_w, window_h, ass.text)
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self, callback)
+      self.callback = callback
+      self.currentOption = 1
+      local crfOpts = {
+        step = 1,
+        min = -1,
+        altDisplayNames = {
+          [-1] = "disabled"
+        }
+      }
+      local profileOpts = {
+        possibleValues = (function()
+          local _accum_0 = { }
+          local _len_0 = 1
+          for _index_0 = 1, #encoding_profiles do
+            local p = encoding_profiles[_index_0]
+            _accum_0[_len_0] = {
+              p['name'],
+              p['profile-desc']
+            }
+            _len_0 = _len_0 + 1
+          end
+          return _accum_0
+        end)()
+      }
+      self.options = {
+        {
+          "encoding_profile",
+          Option("list", "Encoding profile", options.encoding_profile, profileOpts)
+        },
+        {
+          "crf",
+          Option("int", "CRF", options.crf, crfOpts)
+        }
+      }
+      self.keybinds = {
+        ["LEFT"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.leftKey
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["RIGHT"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.rightKey
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["UP"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.prevOpt
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["DOWN"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.nextOpt
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["ENTER"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.confirmOpts
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["ESC"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.cancelOpts
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)()
+      }
+    end,
+    __base = _base_0,
+    __name = "EncodeOptionsPage",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  EncodeOptionsPage = _class_0
+end
 local PreviewPage
 do
   local _class_0
@@ -1377,16 +1555,6 @@ do
   local _class_0
   local _parent_0 = Page
   local _base_0 = {
-    leftKey = function(self)
-      self.profile:leftKey()
-      self:draw()
-      options['profile'] = self.profile:getValue()
-    end,
-    rightKey = function(self)
-      self.profile:rightKey()
-      self:draw()
-      options['profile'] = self.profile:getValue()
-    end,
     setStartTime = function(self)
       self.startTime = mp.get_property_number("time-pos")
       if self.visible then
@@ -1420,10 +1588,10 @@ do
       ass:new_event()
       self:setup_text(ass)
       ass:append(tostring(bold('WebM maker')) .. "\\N\\N")
-      self.profile:draw(ass, true)
       ass:append(tostring(bold('c:')) .. " crop\\N")
       ass:append(tostring(bold('1:')) .. " set start time (current is " .. tostring(seconds_to_time_string(self.startTime)) .. ")\\N")
       ass:append(tostring(bold('2:')) .. " set end time (current is " .. tostring(seconds_to_time_string(self.endTime)) .. ")\\N")
+      ass:append(tostring(bold('o:')) .. " change encode options\\N")
       ass:append(tostring(bold('p:')) .. " preview\\N")
       ass:append(tostring(bold('e:')) .. " encode\\N\\N")
       ass:append(tostring(bold('ESC:')) .. " close\\N")
@@ -1445,6 +1613,20 @@ do
         end
       end)(), self.region)
       return cropPage:show()
+    end,
+    onOptionsChanged = function(self, updated)
+      return self:show()
+    end,
+    changeOptions = function(self)
+      self:hide()
+      local encodeOptsPage = EncodeOptionsPage((function()
+        local _base_1 = self
+        local _fn_0 = _base_1.onOptionsChanged
+        return function(...)
+          return _fn_0(_base_1, ...)
+        end
+      end)())
+      return encodeOptsPage:show()
     end,
     onPreviewEnded = function(self)
       return self:show()
@@ -1482,20 +1664,6 @@ do
   _class_0 = setmetatable({
     __init = function(self)
       self.keybinds = {
-        ["LEFT"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.leftKey
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
-        ["RIGHT"] = (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.rightKey
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)(),
         ["c"] = (function()
           local _base_1 = self
           local _fn_0 = _base_1.crop
@@ -1513,6 +1681,13 @@ do
         ["2"] = (function()
           local _base_1 = self
           local _fn_0 = _base_1.setEndTime
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["o"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.changeOptions
           return function(...)
             return _fn_0(_base_1, ...)
           end
@@ -1542,21 +1717,6 @@ do
       self.startTime = -1
       self.endTime = -1
       self.region = Region()
-      local profileOpts = {
-        possibleValues = (function()
-          local _accum_0 = { }
-          local _len_0 = 1
-          for i, p in ipairs(mp.get_property_native('profile-list')) do
-            _accum_0[_len_0] = {
-              p['name'],
-              p['profile-desc']
-            }
-            _len_0 = _len_0 + 1
-          end
-          return _accum_0
-        end)()
-      }
-      self.profile = Option("list", "Encoding profile", options.profile, profileOpts)
     end,
     __base = _base_0,
     __name = "MainPage",
