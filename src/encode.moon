@@ -172,8 +172,9 @@ encode = (region, startTime, endTime) ->
 	-- 	apply_current_filters(filters)
 
 	if region and region\is_valid!
-		append(filters, {"lavfi-crop=#{region.w}:#{region.h}:#{region.x}:#{region.y}"})
-
+		-- @NOTE: this might fail if the encoding profile has a scale filter set
+		append(command, {"--vf-add=lavfi-crop=#{region.w}:#{region.h}:#{region.x}:#{region.y}"})
+	
 	-- append(filters, get_scale_filters!)
 
 	-- append(filters, format\getPostFilters!)
