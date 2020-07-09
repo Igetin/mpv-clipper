@@ -875,18 +875,14 @@ encode = function(region, startTime, endTime)
     "--profile=" .. tostring(options.profile),
     "--loop-file=no"
   }
-  local filters = { }
   if region and region:is_valid() then
-    append(filters, {
-      "lavfi-crop=" .. tostring(region.w) .. ":" .. tostring(region.h) .. ":" .. tostring(region.x) .. ":" .. tostring(region.y)
+    append(command, {
+      "--vf-add=lavfi-crop=" .. tostring(region.w) .. ":" .. tostring(region.h) .. ":" .. tostring(region.x) .. ":" .. tostring(region.y)
     })
   end
   if options.write_filename_on_metadata then
     append(command, get_metadata_flags())
   end
-  append(command, {
-    "--ovcopts-add=crf=" .. tostring(options.crf)
-  })
   local dir = ""
   if is_stream then
     dir = parse_directory("~")
@@ -942,6 +938,7 @@ encode = function(region, startTime, endTime)
     local res = false
     if not should_display_progress() then
       message("Started encode...")
+      msg.info(command)
       res = run_subprocess({
         args = command,
         cancellable = false
@@ -1418,7 +1415,6 @@ do
       end
     end,
     draw = function(self)
-      msg.info('BLÖÖÖÖÖÖÖÖÖÖ')
       local window_w, window_h = mp.get_osd_size()
       local ass = assdraw.ass_new()
       ass:new_event()
