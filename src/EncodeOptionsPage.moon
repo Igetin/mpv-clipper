@@ -139,9 +139,9 @@ class EncodeOptionsPage extends Page
 		-- by dicts on Lua.
 		@options = {
 			{"encoding_profile", Option("list", "Encoding profile", options.profile, profileOpts)},
+			{"crf", Option("int", "CRF", options.crf, crfOpts)}
 			-- {"audio", Option("bool", "Audio", options.audio)},
 			-- {"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},
-			-- {"crf", Option("int", "CRF", options.crf, crfOpts)}
 		}
 
 		@keybinds =
