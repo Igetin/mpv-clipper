@@ -133,7 +133,7 @@ class EncodeOptionsPage extends Page
 				[-1]: "disabled"
 
 		profileOpts =
-			possibleValues: [{p['name'], p['profile-desc']} for i, p in ipairs(mp.get_property_native('profile-list'))]
+			possibleValues: [{p['name'], p['profile-desc']} for p in *encoding_profiles]
 
 		-- This could be a dict instead of a array of pairs, but order isn't guaranteed
 		-- by dicts on Lua.
