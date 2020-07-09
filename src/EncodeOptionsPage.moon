@@ -138,7 +138,7 @@ class EncodeOptionsPage extends Page
 		-- This could be a dict instead of a array of pairs, but order isn't guaranteed
 		-- by dicts on Lua.
 		@options = {
-			{"encoding_profile", Option("list", "Encoding profile", options.profile, profileOpts)},
+			{"encoding_profile", Option("list", "Encoding profile", options.encoding_profile, profileOpts)},
 			{"crf", Option("int", "CRF", options.crf, crfOpts)}
 			-- {"audio", Option("bool", "Audio", options.audio)},
 			-- {"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},

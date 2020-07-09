@@ -59,7 +59,7 @@ local options = {
 	font_size = 28,
 	margin = 10,
 	message_duration = 5,
-	profile = "enc-f-mp4",  -- from default encoding-profiles.conf
+	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
 	audio = false,
 	burn_subtitles = false
 }

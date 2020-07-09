@@ -139,7 +139,7 @@ encode = (region, startTime, endTime) ->
 		"mpv", path,
 		"--start=" .. seconds_to_time_string(startTime, false, true),
 		"--end=" .. seconds_to_time_string(endTime, false, true),
-		"--profile=#{options.profile}",
+		"--profile=#{options.encoding_profile}",
 		-- When loop-file=inf, the encode won't end. Set this to override.
 		"--loop-file=no"
 	}
@@ -252,7 +252,7 @@ encode = (region, startTime, endTime) ->
 	profiles = mp.get_property_native('profile-list')
 	local extension
 	for i, p in ipairs(profiles)
-		continue if p['name'] != options.profile
+		continue if p['name'] != options.encoding_profile
 		for i, o in ipairs(p['options'])
 			continue if o['key'] != 'of' -- output format
 			extension = o['value']
