@@ -44,10 +44,13 @@ class MainPage extends Page
 		ass = assdraw.ass_new()
 		ass\new_event()
 		self\setup_text(ass)
-		ass\append("#{bold('Profile:')} #{options.encoding_profile}\\N")
+		ass\append("#{bold('Profile:')} #{get_profile_desc(options.encoding_profile)}\\N")
 		ass\append("#{bold('CRF:')} #{options.crf}\\N")
 		ass\append("#{bold('Start time:')} #{seconds_to_time_string(@startTime)}\\N")
-		ass\append("#{bold('End time:')} #{seconds_to_time_string(@endTime)}\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N")
+		ass\append("#{bold('End time:')} #{seconds_to_time_string(@endTime)}\\N")
+		if @region.x > 0 and @region.y > 0
+			ass\append("#{bold('Crop:')} #{@region.x}×#{@region.y}")
+		ass\append("\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N") -- yeah
 		ass\append("#{bold('C:')} crop\\N")
 		ass\append("#{bold('1:')} set start time\\N")
 		ass\append("#{bold('2:')} set end time\\N")
