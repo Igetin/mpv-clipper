@@ -125,8 +125,6 @@ apply_current_filters = (filters) ->
 			str = str .. ":#{k}=%#{string.len(v)}%#{v}"
 		append(filters, {str})
 
-encoding_profiles = [p for p in *(mp.get_property_native('profile-list')) when starts_with(p['name'], 'enc-')]
-
 encode = (region, startTime, endTime) ->
 	-- format = formats[options.output_format]
 
@@ -252,9 +250,9 @@ encode = (region, startTime, endTime) ->
 		dir = parse_directory(options.output_directory)
 
 	local extension
-	for i, p in ipairs(encoding_profiles)
+	for p in *encoding_profiles
 		continue if p['name'] != options.encoding_profile
-		for i, o in ipairs(p['options'])
+		for o in *p['options']
 			continue if o['key'] != 'of' -- output format
 			extension = o['value']
 

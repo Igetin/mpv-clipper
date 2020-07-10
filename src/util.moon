@@ -139,3 +139,10 @@ get_pass_logfile_path = (encode_out_path) ->
 
 starts_with = (str, start) ->
    return string.sub(str, 1, #start) == start
+
+encoding_profiles = [p for p in *(mp.get_property_native('profile-list')) when starts_with(p['name'], 'enc-')]
+
+get_profile_desc = (name) ->
+	for p in *encoding_profiles
+		if name == p['name']
+			return p['profile-desc']
