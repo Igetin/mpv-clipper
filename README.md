@@ -1,6 +1,6 @@
 # HACK
 
-This is a quick & dirty hack that removes all encoding options and instead lets you choose an encoding profile from the main page.
+This is a quick & dirty hack that adds an option for selecting an encoding profile. All profiles starting with `enc-` are considered encoding profiles. CRF can be changed independently and overrides any CRF setting in profile. All other options have been removed.
 
 # mpv-webm
 Simple WebM maker for [mpv][mpv], with no external dependencies.
