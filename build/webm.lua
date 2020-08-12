@@ -890,10 +890,27 @@ encode = function(region, startTime, endTime)
     return 
   end
   local is_stream = not file_exists(path)
+  local cutStartTime = startTime
+  if is_stream then
+    if mp.get_property('file-format') == 'hls' then
+      path = utils.join_path(options.output_directory, 'cache_dump.ts')
+    else
+      msg.warn('Not a HLS stream, exiting.')
+      message("Encode failed! Check the logs for details.")
+      return 
+    end
+    mp.command_native({
+      'dump-cache',
+      seconds_to_time_string(startTime, false, true),
+      seconds_to_time_string((endTime + 5), false, true),
+      path
+    })
+    cutStartTime = 0
+  end
   local command = {
     "mpv",
     path,
-    "--start=" .. seconds_to_time_string(startTime, false, true),
+    "--start=" .. seconds_to_time_string(cutStartTime, false, true),
     "--end=" .. seconds_to_time_string(endTime, false, true),
     "--profile=" .. tostring(options.encoding_profile),
     "--loop-file=no"
@@ -979,7 +996,10 @@ encode = function(region, startTime, endTime)
     else
       message("Encode failed! Check the logs for details.")
     end
-    return os.remove(get_pass_logfile_path(out_path))
+    os.remove(get_pass_logfile_path(out_path))
+    if is_stream then
+      return os.remove(path)
+    end
   end
 end
 local CropPage

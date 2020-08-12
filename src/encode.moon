@@ -135,9 +135,28 @@ encode = (region, startTime, endTime) ->
 
 	is_stream = not file_exists(path)
 
+	cutStartTime = startTime
+
+	-- Dump cache in case of stream
+	if is_stream
+		if mp.get_property('file-format') == 'hls'
+			path = utils.join_path(options.output_directory, 'cache_dump.ts') -- ffmpeg/lavf wants .ts for HLS stream
+		else
+			msg.warn('Not a HLS stream, exiting.')
+			message("Encode failed! Check the logs for details.")
+			return
+		-- This command is still experimental, and the docs state that
+		-- the end of the file might be incomplete (esp. audio seems to cut off early).
+		-- We’ll add a few seconds of leeway to the end time of the dump for this reason.
+		mp.command_native({'dump-cache',
+			seconds_to_time_string(startTime, false, true),
+			seconds_to_time_string((endTime + 5), false, true),
+			path})
+		cutStartTime = 0
+
 	command = {
 		"mpv", path,
-		"--start=" .. seconds_to_time_string(startTime, false, true),
+		"--start=" .. seconds_to_time_string(cutStartTime, false, true),
 		"--end=" .. seconds_to_time_string(endTime, false, true),
 		"--profile=#{options.encoding_profile}",
 		-- When loop-file=inf, the encode won't end. Set this to override.
@@ -306,3 +325,5 @@ encode = (region, startTime, endTime) ->
 		
 		-- Clean up pass log file.
 		os.remove(get_pass_logfile_path(out_path))
+		if is_stream
+			os.remove(path) -- clean up stream
