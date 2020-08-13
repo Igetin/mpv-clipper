@@ -2,6 +2,8 @@
 
 This is a quick & dirty hack of [ekisu’s mpv-webm][mpv-webm] that adds an option for selecting an encoding profile. All profiles starting with `enc-` are considered encoding profiles. CRF can be changed independently and overrides any CRF setting in profile. All other options have been removed.
 
+Has basic support for HLS network streams, including livestreams. Not tested extensively for livestreams, but it should mostly work at least with YouTube and Twitch.
+
 # mpv-clipper
 Simple clip maker for [mpv][mpv], with no external dependencies.
 
