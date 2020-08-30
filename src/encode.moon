@@ -137,14 +137,9 @@ encode = (region, startTime, endTime) ->
 
 	cutStartTime = startTime
 
-	-- Dump cache in case of stream
-	if is_stream
-		if mp.get_property('file-format') == 'hls'
-			path = utils.join_path(options.output_directory, 'cache_dump.ts') -- ffmpeg/lavf wants .ts for HLS stream
-		else
-			msg.warn('Not a HLS stream, exiting.')
-			message("Encode failed! Check the logs for details.")
-			return
+	-- Dump cache in case of stream, only for HLS for now
+	if is_stream and mp.get_property('file-format') == 'hls'
+		path = utils.join_path(options.output_directory, 'cache_dump.ts') -- ffmpeg/lavf wants .ts for HLS stream
 		-- This command is still experimental, and the docs state that
 		-- the end of the file might be incomplete (esp. audio seems to cut off early).
 		-- We’ll add a few seconds of leeway to the end time of the dump for this reason.
