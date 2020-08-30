@@ -18,7 +18,7 @@ Follow the on-screen instructions.
 ## Building (development)
 Building requires [`moonc`, the MoonScript compiler][moonscript], added to the PATH, and a GNU Make-compatible make. Run `make` on the root directory. The output files will be placed under the `build` directory.
 
-[build]: https://raw.githubusercontent.com/Igetin/mpv-webm/master/build/webm.lua
+[build]: https://raw.githubusercontent.com/Igetin/mpv-webm/master/build/clipper.lua
 [mpv]: https://mpv.io
 [mpv-webm]: https://github.com/ekisu/mpv-webm
 [moonscript]: https://moonscript.org

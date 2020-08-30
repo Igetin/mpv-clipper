@@ -891,14 +891,8 @@ encode = function(region, startTime, endTime)
   end
   local is_stream = not file_exists(path)
   local cutStartTime = startTime
-  if is_stream then
-    if mp.get_property('file-format') == 'hls' then
-      path = utils.join_path(options.output_directory, 'cache_dump.ts')
-    else
-      msg.warn('Not a HLS stream, exiting.')
-      message("Encode failed! Check the logs for details.")
-      return 
-    end
+  if is_stream and mp.get_property('file-format') == 'hls' then
+    path = utils.join_path(options.output_directory, 'cache_dump.ts')
     mp.command_native({
       'dump-cache',
       seconds_to_time_string(startTime, false, true),

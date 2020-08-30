@@ -20,9 +20,9 @@ SOURCES += src/MainPage.moon
 SOURCES += src/main.moon
 
 TMPDIR       := build
-JOINEDSRC    := $(TMPDIR)/webm_bundle.moon
+JOINEDSRC    := $(TMPDIR)/clipper_bundle.moon
 OUTPUT       := $(JOINEDSRC:.moon=.lua)
-JOINEDLUASRC := $(TMPDIR)/webm.lua
+JOINEDLUASRC := $(TMPDIR)/clipper.lua
 RESULTS      := $(addprefix $(TMPDIR)/, $(SOURCES:.moon=.lua))
 MPVCONFIGDIR := ~/.config/mpv/
 
