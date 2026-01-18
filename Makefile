@@ -3,13 +3,18 @@ LUASOURCES := src/requires.lua
 LUASOURCES += src/options.lua
 LUASOURCES += src/base64.lua
 
+SOURCES += src/testing.moon
 SOURCES += src/util.moon
 SOURCES += src/video_to_screen.moon
 #SOURCES += src/vp8_twopass_log_patcher.moon
 #SOURCES += src/formats/base.moon
 #SOURCES += src/formats/rawvideo.moon
 #SOURCES += src/formats/webm.moon
-#SOURCES += src/formats/mp4.moon
+#SOURCES += src/formats/avc.moon
+#SOURCES += src/formats/av1.moon
+#SOURCES += src/formats/hevc.moon
+#SOURCES += src/formats/mp3.moon
+#SOURCES += src/formats/gif.moon
 SOURCES += src/Page.moon
 SOURCES += src/EncodeWithProgress.moon
 SOURCES += src/encode.moon
@@ -28,7 +33,7 @@ MPVCONFIGDIR := ~/.config/mpv/
 
 .PHONY: all clean
 
-all: $(JOINEDLUASRC)
+all: $(JOINEDLUASRC) $(CONFFILE)
 
 $(OUTPUT): $(JOINEDSRC)
 	@printf 'Building %s\n' $@
@@ -51,6 +56,10 @@ $(TMPDIR):
 
 $(TMPDIR)/%/: | $(TMPDIR)
 	@mkdir -p $@
+
+$(CONFFILE): src/options.lua
+	@printf 'Generating %s\n' $@
+	@lua build-webm-conf.lua > $@
 
 install: $(JOINEDLUASRC)
 	install -d $(MPVCONFIGDIR)/scripts/

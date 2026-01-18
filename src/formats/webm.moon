@@ -25,7 +25,11 @@ class WebmVP8 extends Format
 
 	getFlags: =>
 		{
-			"--ovcopts-add=threads=#{options.libvpx_threads}"
+			"--ovcopts-add=threads=#{options.threads}",
+			"--ovcopts-add=auto-alt-ref=1",
+			"--ovcopts-add=lag-in-frames=25",
+			"--ovcopts-add=quality=good",
+			"--ovcopts-add=cpu-used=0",
 		}
 
 formats["webm-vp8"] = WebmVP8!
@@ -33,15 +37,15 @@ formats["webm-vp8"] = WebmVP8!
 class WebmVP9 extends Format
 	new: =>
 		@displayName = "WebM (VP9)"
-		@supportsTwopass = true
+		@supportsTwopass = false
 		@videoCodec = "libvpx-vp9"
-		@audioCodec = "libvorbis"
+		@audioCodec = "libopus"
 		@outputExtension = "webm"
 		@acceptsBitrate = true
 
 	getFlags: =>
 		{
-			"--ovcopts-add=threads=#{options.libvpx_threads}"
+			"--ovcopts-add=threads=#{options.threads}"
 		}
 
 formats["webm-vp9"] = WebmVP9!

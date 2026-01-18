@@ -13,6 +13,17 @@ get_active_tracks = ->
 			active[track["type"]][count + 1] = track
 	return active
 
+filter_tracks_supported_by_format = (active_tracks, format) ->
+	has_video_codec = format.videoCodec != ""
+	has_audio_codec = format.audioCodec != ""
+	
+	supported =
+		video: has_video_codec and active_tracks["video"] or {}
+		audio: has_audio_codec and active_tracks["audio"] or {}
+		sub: has_video_codec and active_tracks["sub"] or {}
+	
+	return supported
+
 append_track = (out, track) ->
 	external_flag =
 		"audio": "audio-file"
@@ -63,9 +74,42 @@ append_audio_tracks = (out, tracks) ->
 		append_track(out, internal_tracks[1])
 
 get_scale_filters = ->
+	filters = {}
+	if options.force_square_pixels
+		append(filters, {"lavfi-scale=iw*sar:ih"})
 	if options.scale_height > 0
-		return {"lavfi-scale=-2:#{options.scale_height}"}
+		append(filters, {"lavfi-scale=-2:#{options.scale_height}"})
+	return filters
+
+get_fps_filters = ->
+	if options.fps > 0
+		return {"fps=#{options.fps}"}
 	return {}
+
+get_contrast_brightness_and_saturation_filters = ->
+	mpv_brightness = mp.get_property("brightness")
+	mpv_contrast = mp.get_property("contrast")
+	mpv_saturation = mp.get_property("saturation")
+
+	if mpv_brightness == 0 and mpv_contrast == 0 and mpv_saturation == 0
+		-- Default values, no need to change anything.
+		return {}
+
+	-- We have to map mpv's contrast/brightness/saturation values to the ones used by the eq filter.
+	-- From what I've gathered from looking at ffmpeg's source, the contrast value is used to multiply the luma
+	-- channel, while the saturation one multiplies both chroma channels. On mpv, it seems that contrast multiplies
+	-- both luma and chroma (?); but I don't really know a lot about how things work internally. This might cause some
+	-- weird interactions, but for now I guess it's fine.
+	eq_saturation = (mpv_saturation + 100) / 100.0
+	eq_contrast = (mpv_contrast + 100) / 100.0
+
+	-- For brightness, this should work I guess... For some reason, contrast is factored into how the luma offset is
+	-- calculated on the eq filter, so we need to offset it in a way that the effective offset added is the same.
+	-- Also, on mpv's side, we add it after the conversion to RGB; I'm not sure how that affects things but hopefully
+	-- it ends in the same result.
+	eq_brightness = (mpv_brightness / 50.0 + eq_contrast - 1) / 2.0
+
+	return {"lavfi-eq=contrast=#{eq_contrast}:saturation=#{eq_saturation}:brightness=#{eq_brightness}"}
 
 append_property = (out, property_name, option_name) ->
 	option_name = option_name or property_name
@@ -85,12 +129,41 @@ append_list_options = (out, property_name, option_prefix) ->
 -- Get the current playback options, trying to match how the video is being played.
 get_playback_options = ->
 	ret = {}
-	append_property(ret, "sub-ass-override")
-	append_property(ret, "sub-ass-force-style")
-	append_property(ret, "sub-auto")
-	append_property(ret, "sub-delay")
 	append_property(ret, "video-rotate")
 	append_property(ret, "ytdl-format")
+	append_property(ret, "deinterlace")
+
+	return ret
+
+get_sub_options = ->
+	ret = {}
+	append_property(ret, "sub-ass-override")
+	append_property(ret, "sub-ass-force-style")
+	append_property(ret, "sub-ass-use-video-data")
+	append_property(ret, "sub-auto")
+	append_property(ret, "sub-pos")
+	append_property(ret, "sub-delay")
+	append_property(ret, "sub-speed")
+	append_property(ret, "sub-scale")
+	append_property(ret, "sub-font")
+	append_property(ret, "sub-font-size")
+	append_property(ret, "sub-bold")
+	append_property(ret, "sub-italic")
+	append_property(ret, "sub-color")
+	append_property(ret, "sub-back-color")
+	append_property(ret, "sub-border-color")
+	append_property(ret, "sub-border-size")
+	append_property(ret, "sub-shadow-color")
+	append_property(ret, "sub-shadow-offset")
+	append_property(ret, "sub-use-margins")
+	append_property(ret, "sub-margin-x")
+	append_property(ret, "sub-margin-y")
+	append_property(ret, "sub-align-x")
+	append_property(ret, "sub-align-y")
+	append_property(ret, "sub-spacing")
+	append_property(ret, "sub-justify")
+	append_property(ret, "sub-gauss")
+	append_property(ret, "sub-gray")
 
 	return ret
 
@@ -205,35 +278,33 @@ encode = (region, startTime, endTime) ->
 	if options.write_filename_on_metadata
 		append(command, get_metadata_flags!)
 
-	-- if options.target_filesize > 0 and format.acceptsBitrate
-	-- 	dT = endTime - startTime
-	-- 	if options.strict_filesize_constraint
-	-- 		-- Calculate video bitrate, assume audio is constant.
-	-- 		video_kilobits = options.target_filesize * 8
-	-- 		if #active_tracks["audio"] > 0 -- compensate for audio
-	-- 			video_kilobits = video_kilobits - dT * options.strict_audio_bitrate
+	-- if format.acceptsBitrate
+	-- 	if options.target_filesize > 0
+	-- 		length = endTime - startTime
+	-- 		video_bitrate, audio_bitrate = calculate_bitrate(supported_active_tracks, format, length)
+	-- 		if video_bitrate
 	-- 			append(command, {
-	-- 				"--oacopts-add=b=#{options.strict_audio_bitrate}k"
+	-- 				"--ovcopts-add=b=#{video_bitrate}k",
 	-- 			})
-	-- 		video_kilobits *= options.strict_bitrate_multiplier
-	-- 		bitrate = math.floor(video_kilobits / dT)
-	-- 		append(command, {
-	-- 			"--ovcopts-add=b=#{bitrate}k",
-	-- 			"--ovcopts-add=minrate=#{bitrate}k",
-	-- 			"--ovcopts-add=maxrate=#{bitrate}k",
-	-- 		})
+			
+	-- 		if audio_bitrate
+	-- 			append(command, {
+	-- 				"--oacopts-add=b=#{audio_bitrate}k"
+	-- 			})
+			
+	-- 		if options.strict_filesize_constraint
+	-- 			type = format.videoCodec != "" and "ovc" or "oac"
+	-- 			append(command, {
+	-- 				"--#{type}opts-add=minrate=#{bitrate}k",
+	-- 				"--#{type}opts-add=maxrate=#{bitrate}k",
+	-- 			})
 	-- 	else
-	-- 		-- Loosely set the video bitrate.
-	-- 		bitrate = math.floor(options.target_filesize * 8 / dT)
+	-- 		type = format.videoCodec != "" and "ovc" or "oac"
+	-- 		-- set video bitrate to 0. This might enable constant quality, or some
+	-- 		-- other encoding modes, depending on the codec.
 	-- 		append(command, {
-	-- 			"--ovcopts-add=b=#{bitrate}k"
+	-- 			"--#{type}opts-add=b=0"
 	-- 		})
-	-- elseif options.target_filesize <= 0 and format.acceptsBitrate
-	-- 	-- set video bitrate to 0. This might enable constant quality, or some
-	-- 	-- other encoding modes, depending on the codec.
-	-- 	append(command, {
-	-- 		"--ovcopts-add=b=0"
-	-- 	})
 
 	-- split the user-passed settings on whitespace
 	-- for token in string.gmatch(options.additional_flags, "[^%s]+") do
@@ -274,6 +345,8 @@ encode = (region, startTime, endTime) ->
 	out_path = utils.join_path(dir, formatted_filename)
 	append(command, {"--o=#{out_path}"})
 
+	emit_event("encode-started")
+
 	-- Do the first pass now, as it won't require the output path. I don't think this works on streams.
 	-- Also this will ignore run_detached, at least for the first pass.
 	-- if options.twopass and format.supportsTwopass and not is_stream
@@ -287,6 +360,8 @@ encode = (region, startTime, endTime) ->
 	-- 	res = run_subprocess({args: first_pass_cmdline, cancellable: false})
 	-- 	if not res
 	-- 		message("First pass failed! Check the logs for details.")
+	-- 		emit_event("encode-finished", "fail")
+
 	-- 		return
 		
 	-- 	-- set the second pass flag on the final encode command
@@ -298,6 +373,8 @@ encode = (region, startTime, endTime) ->
 	-- 		-- We need to patch the pass log file before running the second pass.
 	-- 		msg.verbose("Patching libvpx pass log file...")
 	-- 		vp8_patch_logfile(get_pass_logfile_path(out_path), endTime - startTime)
+
+	command = format\postCommandModifier(command, region, startTime, endTime)
 
 	msg.info("Encoding to", out_path)
 	msg.verbose("Command line:", table.concat(command, " "))
@@ -315,8 +392,13 @@ encode = (region, startTime, endTime) ->
 			res = ewp\startEncode(command)
 		if res
 			message("Encoded successfully! Saved to\\N#{bold(out_path)}")
+			emit_event("encode-finished", "success")
+			if options.completion_command != ""
+				mp.command(options.completion_command\gsub("%%{output}", out_path))
 		else
 			message("Encode failed! Check the logs for details.")
+			emit_event("encode-finished", "fail")
+
 		
 		-- Clean up pass log file.
 		os.remove(get_pass_logfile_path(out_path))

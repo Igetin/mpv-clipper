@@ -36,8 +36,72 @@ file_exists = (name) ->
 		return true
 	return false
 
+expand_properties = (text, magic="$") ->
+	for prefix, raw, prop, colon, fallback, closing in text\gmatch("%" .. magic .. "{([?!]?)(=?)([^}:]*)(:?)([^}]*)(}*)}")
+		local err
+		local prop_value
+		local compare_value
+		original_prop = prop
+		get_property = mp.get_property_osd
+
+		if raw == "="
+			get_property = mp.get_property
+
+		if prefix ~= ""
+			for actual_prop, compare in prop\gmatch("(.-)==(.*)")
+				prop = actual_prop
+				compare_value = compare
+
+		if colon == ":"
+			prop_value, err = get_property(prop, fallback)
+		else
+			prop_value, err = get_property(prop, "(error)")
+		prop_value = tostring(prop_value)
+
+		if prefix == "?"
+			if compare_value == nil
+				prop_value = err == nil and fallback .. closing or ""
+			else
+				prop_value = prop_value == compare_value and fallback .. closing or ""
+			prefix = "%" .. prefix
+		elseif prefix == "!"
+			if compare_value == nil
+				prop_value = err ~= nil and fallback .. closing or ""
+			else
+				prop_value = prop_value ~= compare_value and fallback .. closing or ""
+		else
+			prop_value = prop_value .. closing
+
+		if colon == ":"
+			text, _ = text\gsub("%" .. magic .. "{" .. prefix .. raw .. original_prop\gsub("%W", "%%%1") .. ":" .. fallback\gsub("%W", "%%%1") .. closing .. "}", expand_properties(prop_value))
+		else
+			text, _ = text\gsub("%" .. magic .. "{" .. prefix .. raw .. original_prop\gsub("%W", "%%%1") .. closing .. "}", prop_value)
+
+	return text
+
 format_filename = (startTime, endTime, extension) ->
+	replaceFirst =
+		"%%mp": "%%mH.%%mM.%%mS"
+		"%%mP": "%%mH.%%mM.%%mS.%%mT"
+		"%%p": "%%wH.%%wM.%%wS"
+		"%%P": "%%wH.%%wM.%%wS.%%wT"
 	replaceTable =
+		"%%wH": string.format("%02d", math.floor(startTime/(60*60)))
+		"%%wh": string.format("%d", math.floor(startTime/(60*60)))
+		"%%wM": string.format("%02d", math.floor(startTime/60%60))
+		"%%wm": string.format("%d", math.floor(startTime/60))
+		"%%wS": string.format("%02d", math.floor(startTime%60))
+		"%%ws": string.format("%d", math.floor(startTime))
+		"%%wf": string.format("%s", startTime)
+		"%%wT": string.sub(string.format("%.3f", startTime%1), 3)
+		"%%mH": string.format("%02d", math.floor(endTime/(60*60)))
+		"%%mh": string.format("%d", math.floor(endTime/(60*60)))
+		"%%mM": string.format("%02d", math.floor(endTime/60%60))
+		"%%mm": string.format("%d", math.floor(endTime/60))
+		"%%mS": string.format("%02d", math.floor(endTime%60))
+		"%%ms": string.format("%d", math.floor(endTime))
+		"%%mf": string.format("%s", endTime)
+		"%%mT": string.sub(string.format("%.3f", endTime%1), 3)
 		"%%f": mp.get_property("filename")
 		"%%F": mp.get_property("filename/no-ext")
 		"%%s": seconds_to_path_element(startTime)
@@ -45,12 +109,28 @@ format_filename = (startTime, endTime, extension) ->
 		"%%e": seconds_to_path_element(endTime)
 		"%%E": seconds_to_path_element(endTime, true)
 		"%%T": mp.get_property("media-title")
-		"%%M": (mp.get_property_native('aid') and not mp.get_property_native('mute')) and '-audio' or ''
 		"%%R": (options.scale_height != -1) and "-#{options.scale_height}p" or "-#{mp.get_property_native('height')}p"
+		"%%mb": options.target_filesize/1000
+		"%%t%%": "%%"
 	filename = options.output_template
 
+	for format, value in pairs replaceFirst
+		filename, _ = filename\gsub(format, value)
 	for format, value in pairs replaceTable
 		filename, _ = filename\gsub(format, value)
+
+	if mp.get_property_bool("demuxer-via-network", false)
+		filename, _ = filename\gsub("%%X{([^}]*)}", "%1")
+		filename, _ = filename\gsub("%%x", "")
+	else
+		x = string.gsub(mp.get_property("stream-open-filename", ""), string.gsub(mp.get_property("filename", ""), "%W", "%%%1") .. "$", "")
+		filename, _ = filename\gsub("%%X{[^}]*}", x)
+		filename, _ = filename\gsub("%%x", x)
+
+	filename = expand_properties(filename, "%")
+
+	for format in filename\gmatch("%%t([aAbBcCdDeFgGhHIjmMnprRStTuUVwWxXyYzZ])")
+		filename, _ = filename\gsub("%%t" .. format, os.date("%" .. format))
 
 	-- Remove invalid chars
 	-- Windows: < > : " / \ | ? *

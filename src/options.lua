@@ -8,6 +8,8 @@ local options = {
 	-- backslashes as a path separator. Examples of valid inputs for this field
 	-- would be: [[]] (the default, empty value), [[C:\Users\John]] (on Windows),
 	-- and [[/home/john]] (on Unix-like systems eg. Linux).
+	-- The [[]] delimiter is not needed when using from a configuration file
+	-- in the script-opts folder.
 	output_directory = [[]],
 	run_detached = false,
 	-- Template string for the output file
@@ -21,6 +23,9 @@ local options = {
 	output_template = "%F-[%s-%e]",
 	-- Scale video to a certain height, keeping the aspect ratio. -1 disables it.
 	-- scale_height = -1,
+	-- Change the FPS of the output video, dropping or duplicating frames as needed.
+	-- -1 means the FPS will be unchanged from the source.
+	-- fps = -1,
 	-- Target filesize, in kB. This will be used to calculate the bitrate
 	-- used on the encode. If this is set to <= 0, the video bitrate will be set
 	-- to 0, which might enable constant quality modes, depending on the
@@ -35,7 +40,15 @@ local options = {
 	-- In kilobits.
 	-- strict_audio_bitrate = 64,
 	-- Sets the output format, from a few predefined ones.
-	-- Currently we have webm-vp8 (libvpx/libvorbis), webm-vp9 (libvpx-vp9/libvorbis)
+	-- Currently we have:
+	-- av1
+	-- hevc
+	-- webm-vp9 (libvpx-vp9/libopus)
+	-- avc (h264/AAC)
+	-- avc-nvenc (h264-NVENC/AAC)
+	-- webm-vp8 (libvpx/libvorbis)
+	-- gif
+	-- mp3 (libmp3lame)
 	-- and raw (rawvideo/pcm_s16le).
 	-- output_format = "webm-vp8",
 	-- twopass = false,
@@ -62,6 +75,14 @@ local options = {
 	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
 	audio = false,
 	burn_subtitles = false
+	-- gif dither mode, 0-5 for bayer w/ bayer_scale 0-5, 6 for paletteuse default (sierra2_4a)
+	-- gif_dither = 2,
+	-- Force square pixels on output video
+	-- Some players like recent Firefox versions display videos with non-square pixels with wrong aspect ratio
+	-- force_square_pixels = false,
+    -- MPV command to run upon successful encoding
+    -- %{output} will be replaced with the path to the resulting file.
+    -- completion_command = "",
 }
 
 mpopts.read_options(options)
