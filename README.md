@@ -10,9 +10,18 @@ Simple clip maker for [mpv][mpv], with no external dependencies.
 ![sample](/img/sample.png)
 
 ## Installation
-Place [this][build] in your mpv `scripts` folder. The `scripts` folder can be found (or created, if it does not already exist) in the following paths:
-- Linux/macOS: `~/.config/mpv/scripts`, where `~` is your user's home folder;
-- Windows: mpv will try to load scripts from `%APPDATA%\mpv\scripts`, followed by `<mpv binary folder>\portable_config\scripts` and `<mpv binary folder>\mpv\scripts`; where `%APPDATA%` is a Windows-specific directory (typing `%APPDATA%` on Windows + R should take you to that folder), and `<mpv binary folder>` is the folder that contains the `mpv.exe` binary.
+
+Prerequisites:
+- moonc
+- make
+
+Run this in the project root:
+
+```bash
+make clean && make
+```
+
+Place the built file (`build/clipper.lua`) in your mpv `scripts` folder.
 
 Additional details about the folder structure can be found in the [mpv's manual][file locations].
 
@@ -27,7 +36,7 @@ You can configure the script's defaults by either changing the `options` at the 
 ## Building (development)
 Building requires [`moonc`, the MoonScript compiler][moonscript], added to the PATH, and a GNU Make-compatible make. Run `make` on the root directory. The output files will be placed under the `build` directory.
 
-[build]: https://raw.githubusercontent.com/Igetin/mpv-webm/master/build/clipper.lua
+[build]: https://raw.githubusercontent.com/Igetin/mpv-clipper/master/build/clipper.lua
 [file locations]: https://mpv.io/manual/master/#files
 [mpv]: https://mpv.io
 [moonscript]: https://moonscript.org
