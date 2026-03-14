@@ -374,7 +374,7 @@ encode = (region, startTime, endTime) ->
 	-- 		msg.verbose("Patching libvpx pass log file...")
 	-- 		vp8_patch_logfile(get_pass_logfile_path(out_path), endTime - startTime)
 
-	command = format\postCommandModifier(command, region, startTime, endTime)
+	-- command = format\postCommandModifier(command, region, startTime, endTime)
 
 	msg.info("Encoding to", out_path)
 	msg.verbose("Command line:", table.concat(command, " "))
