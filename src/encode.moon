@@ -393,8 +393,9 @@ encode = (region, startTime, endTime) ->
 		if res
 			message("Encoded successfully! Saved to\\N#{bold(out_path)}")
 			emit_event("encode-finished", "success")
-			if options.completion_command != ""
-				mp.command(options.completion_command\gsub("%%{output}", out_path))
+			completion_cmd = options.completion_command
+			if type(completion_cmd) == "string" and completion_cmd != ""
+				mp.command(completion_cmd\gsub("%%{output}", out_path))
 		else
 			message("Encode failed! Check the logs for details.")
 			emit_event("encode-finished", "fail")
