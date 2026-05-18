@@ -149,6 +149,20 @@ class EncodeOptionsPage extends Page
 			altDisplayNames:
 				[-1]: "disabled"
 
+		x264TuneOpts =
+			possibleValues: {
+				{"", "Profile default (#{get_profile_default_x264_tune(options.encoding_profile)})"}
+				{"none", "No tune"}
+				{"film"}
+				{"animation"}
+				{"grain"}
+				{"stillimage"}
+				{"psnr"}
+				{"ssim"}
+				{"fastdecode"}
+				{"zerolatency"}
+			}
+
 		profileOpts =
 			possibleValues: [{p['name'], p['profile-desc']} for p in *encoding_profiles]
 		fpsOpts =
@@ -168,7 +182,8 @@ class EncodeOptionsPage extends Page
 		-- by dicts on Lua.
 		@options = {
 			{"encoding_profile", Option("list", "Encoding profile", options.encoding_profile, profileOpts)},
-			{"crf", Option("int", "CRF", options.crf, crfOpts)}
+			{"crf", Option("int", "CRF", options.crf, crfOpts)},
+			{"x264_tune", Option("list", "x264 tune", options.x264_tune, x264TuneOpts)}
 			-- {"audio", Option("bool", "Audio", options.audio)},
 			-- {"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},
 		}
@@ -186,11 +201,25 @@ class EncodeOptionsPage extends Page
 
 	leftKey: =>
 		(self\getCurrentOption!)\leftKey!
+		self\syncDependentOptions!
 		self\draw!
 
 	rightKey: =>
 		(self\getCurrentOption!)\rightKey!
+		self\syncDependentOptions!
 		self\draw!
+
+	syncDependentOptions: =>
+		currentPair = @options[@currentOption]
+		return unless currentPair and currentPair[1] == "encoding_profile"
+
+		for _, optPair in ipairs @options
+			continue if optPair[1] != "x264_tune"
+			tuneOption = optPair[2]
+			tuneOption.opts.possibleValues[1][2] = "Profile default (#{get_profile_default_x264_tune((self\getCurrentOption!)\getValue! )})"
+			if tuneOption\getValue! == ""
+				tuneOption\setValue("")
+			break
 
 	prevOpt: =>
 		for i = @currentOption - 1, 1, -1

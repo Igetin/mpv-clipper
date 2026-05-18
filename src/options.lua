@@ -62,6 +62,10 @@ local options = {
 	-- Constant Rate Factor (CRF). The value meaning and limits may change,
 	-- from codec to codec. Set to -1 to disable.
 	crf = 15,
+	-- Overrides the x264 tune from the selected encoding profile. Empty means use
+	-- the profile's tune, or "animation" if the profile does not define one.
+	-- Set to "none" to force no tune argument.
+	x264_tune = "",
 	-- Useful for flags that may impact output filesize, such as qmin, qmax etc
 	-- Won't be applied when strict_filesize_constraint is on.
 	-- non_strict_additional_flags = "",

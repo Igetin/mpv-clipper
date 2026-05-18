@@ -222,6 +222,56 @@ starts_with = (str, start) ->
 
 encoding_profiles = [p for p in *(mp.get_property_native('profile-list')) when starts_with(p['name'], 'enc-')]
 
+get_encoding_profile = (name) ->
+	for p in *encoding_profiles
+		if name == p['name']
+			return p
+
+get_encoding_profile_option = (name, key) ->
+	profile = get_encoding_profile(name)
+	return nil unless profile and profile['options']
+
+	for option in *profile['options']
+		if option['key'] == key
+			return option['value']
+
+get_key_value_list_entry = (value, key) ->
+	return nil unless value
+
+	for item in string.gmatch(value, "[^,]+")
+		if starts_with(item, "#{key}=")
+			return string.sub(item, #key + 2)
+
+get_encoding_profile_codec_option = (name, key) ->
+	directValue = get_encoding_profile_option(name, key)
+	return directValue if directValue
+
+	profile = get_encoding_profile(name)
+	return nil unless profile and profile['options']
+
+	for option in *profile['options']
+		continue unless option['value']
+
+		if option['key'] == 'ovcopts'
+			parsedValue = get_key_value_list_entry(option['value'], key)
+			return parsedValue if parsedValue
+
+		if option['key'] == 'ovcopts-add' and starts_with(option['value'], "#{key}=")
+			return string.sub(option['value'], #key + 2)
+
+get_profile_default_x264_tune = (name) ->
+	get_encoding_profile_codec_option(name, 'tune') or 'animation'
+
+get_current_x264_tune = ->
+	if options.x264_tune == "none"
+		return nil
+	if options.x264_tune and options.x264_tune != ""
+		return options.x264_tune
+	get_profile_default_x264_tune(options.encoding_profile)
+
+get_current_x264_tune_display = ->
+	get_current_x264_tune! or "none"
+
 get_profile_desc = (name) ->
 	for p in *encoding_profiles
 		if name == p['name']

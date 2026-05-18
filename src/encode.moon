@@ -313,6 +313,15 @@ encode = (region, startTime, endTime) ->
 	append(command, {
 		"--ovcopts-add=crf=#{options.crf}"
 	})
+	tune = get_current_x264_tune!
+	if tune
+		append(command, {
+			"--ovcopts-add=tune=#{tune}"
+		})
+	else
+		append(command, {
+			"--ovcopts-remove=tune"
+		})
 
 	-- if not options.strict_filesize_constraint
 	-- 	for token in string.gmatch(options.non_strict_additional_flags, "[^%s]+") do
