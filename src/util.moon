@@ -262,6 +262,23 @@ get_encoding_profile_codec_option = (name, key) ->
 get_profile_default_x264_tune = (name) ->
 	get_encoding_profile_codec_option(name, 'tune') or 'animation'
 
+get_profile_default_audio_codec = (name) ->
+	codec = get_encoding_profile_option(name, 'oac')
+	return nil if codec == 'no'
+	codec
+
+get_profile_default_audio_enabled = (name) ->
+	audioEnabled = get_encoding_profile_option(name, 'audio')
+	return false if audioEnabled == 'no'
+
+	selectedAudio = get_encoding_profile_option(name, 'aid')
+	return false if selectedAudio == 'no'
+
+	codec = get_encoding_profile_option(name, 'oac')
+	return false if codec == 'no'
+
+	true
+
 get_current_x264_tune = ->
 	if options.x264_tune == "none"
 		return nil
@@ -271,6 +288,16 @@ get_current_x264_tune = ->
 
 get_current_x264_tune_display = ->
 	get_current_x264_tune! or "none"
+
+get_current_audio_enabled = ->
+	if options.audio_mode == 'no'
+		return false
+	if options.audio_mode == 'yes'
+		return true
+	get_profile_default_audio_enabled(options.encoding_profile)
+
+get_current_audio_enabled_display = ->
+	get_current_audio_enabled! and 'yes' or 'no'
 
 get_profile_desc = (name) ->
 	for p in *encoding_profiles

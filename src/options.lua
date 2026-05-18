@@ -66,6 +66,10 @@ local options = {
 	-- the profile's tune, or "animation" if the profile does not define one.
 	-- Set to "none" to force no tune argument.
 	x264_tune = "",
+	-- Controls whether audio is included in the encode. Empty means use the
+	-- selected profile's audio settings if present. Set to "yes" to force audio on
+	-- when the profile provides audio codec settings, or "no" to disable audio.
+	audio_mode = "",
 	-- Useful for flags that may impact output filesize, such as qmin, qmax etc
 	-- Won't be applied when strict_filesize_constraint is on.
 	-- non_strict_additional_flags = "",
@@ -77,7 +81,6 @@ local options = {
 	margin = 10,
 	message_duration = 5,
 	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
-	audio = false,
 	burn_subtitles = false,
 	-- MPV command to run upon successful encoding.
 	-- %{output} will be replaced with the path to the resulting file.

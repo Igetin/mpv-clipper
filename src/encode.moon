@@ -231,6 +231,21 @@ encode = (region, startTime, endTime) ->
 		"--loop-file=no"
 	}
 
+	if options.audio_mode == 'no'
+		append(command, {
+			"--aid=no",
+			"--oac=no"
+		})
+	else if options.audio_mode == 'yes'
+		append(command, {
+			"--aid=auto"
+		})
+		profileAudioCodec = get_profile_default_audio_codec(options.encoding_profile)
+		if profileAudioCodec
+			append(command, {
+				"--oac=#{profileAudioCodec}"
+			})
+
 	-- active_tracks = get_active_tracks!
 	-- for track_type, tracks in pairs active_tracks
 	-- 	if track_type == "audio"

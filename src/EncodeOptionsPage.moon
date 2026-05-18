@@ -163,6 +163,13 @@ class EncodeOptionsPage extends Page
 				{"zerolatency"}
 			}
 
+		audioOpts =
+			possibleValues: {
+				{"", "Profile default (#{get_profile_default_audio_enabled(options.encoding_profile) and 'yes' or 'no'})"}
+				{"yes", "yes"}
+				{"no", "no"}
+			}
+
 		profileOpts =
 			possibleValues: [{p['name'], p['profile-desc']} for p in *encoding_profiles]
 		fpsOpts =
@@ -184,7 +191,7 @@ class EncodeOptionsPage extends Page
 			{"encoding_profile", Option("list", "Encoding profile", options.encoding_profile, profileOpts)},
 			{"crf", Option("int", "CRF", options.crf, crfOpts)},
 			{"x264_tune", Option("list", "x264 tune", options.x264_tune, x264TuneOpts)}
-			-- {"audio", Option("bool", "Audio", options.audio)},
+			{"audio_mode", Option("list", "Audio", options.audio_mode, audioOpts)}
 			-- {"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},
 		}
 
@@ -214,12 +221,16 @@ class EncodeOptionsPage extends Page
 		return unless currentPair and currentPair[1] == "encoding_profile"
 
 		for _, optPair in ipairs @options
-			continue if optPair[1] != "x264_tune"
-			tuneOption = optPair[2]
-			tuneOption.opts.possibleValues[1][2] = "Profile default (#{get_profile_default_x264_tune((self\getCurrentOption!)\getValue! )})"
-			if tuneOption\getValue! == ""
-				tuneOption\setValue("")
-			break
+			if optPair[1] == "x264_tune"
+				tuneOption = optPair[2]
+				tuneOption.opts.possibleValues[1][2] = "Profile default (#{get_profile_default_x264_tune((self\getCurrentOption!)\getValue! )})"
+				if tuneOption\getValue! == ""
+					tuneOption\setValue("")
+			if optPair[1] == "audio_mode"
+				audioOption = optPair[2]
+				audioOption.opts.possibleValues[1][2] = "Profile default (#{get_profile_default_audio_enabled((self\getCurrentOption!)\getValue! ) and 'yes' or 'no'})"
+				if audioOption\getValue! == ""
+					audioOption\setValue("")
 
 	prevOpt: =>
 		for i = @currentOption - 1, 1, -1
