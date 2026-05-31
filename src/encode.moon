@@ -367,6 +367,11 @@ encode = (region, startTime, endTime) ->
 
 	formatted_filename = format_filename(startTime, endTime, extension)
 	out_path = utils.join_path(dir, formatted_filename)
+	out_dir, _ = utils.split_path(out_path)
+	unless ensure_directory_exists(out_dir)
+		message("Failed to create output directory. Check the logs for details.")
+		emit_event("encode-finished", "fail")
+		return
 	append(command, {"--o=#{out_path}"})
 
 	emit_event("encode-started")

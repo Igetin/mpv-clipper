@@ -79,6 +79,21 @@ expand_properties = (text, magic="$") ->
 
 	return text
 
+sanitize_path_component = (component) ->
+	-- Remove invalid chars from each path component.
+	-- Windows: < > : " / \ | ? *
+	-- Linux: /
+	sanitized, _ = component\gsub("[<>:\"/\\|?*]", "")
+	if sanitized == "." or sanitized == ".."
+		return "_"
+	return sanitized
+
+join_relative_path = (parts) ->
+	path = parts[1]
+	for i = 2, #parts
+		path = utils.join_path(path, parts[i])
+	return path
+
 format_filename = (startTime, endTime, extension) ->
 	replaceFirst =
 		"%%mp": "%%mH.%%mM.%%mS"
@@ -132,12 +147,18 @@ format_filename = (startTime, endTime, extension) ->
 	for format in filename\gmatch("%%t([aAbBcCdDeFgGhHIjmMnprRStTuUVwWxXyYzZ])")
 		filename, _ = filename\gsub("%%t" .. format, os.date("%" .. format))
 
-	-- Remove invalid chars
-	-- Windows: < > : " / \ | ? *
-	-- Linux: /
-	filename, _ = filename\gsub("[<>:\"/\\|?*]", "")
+	parts = {}
+	for part in filename\gmatch("[^/\\]+")
+		sanitized = sanitize_path_component(part)
+		parts[#parts + 1] = sanitized if sanitized != ""
 
-	return "#{filename}.#{extension}"
+	if #parts == 0
+		fallback = sanitize_path_component(mp.get_property("filename/no-ext") or "clip")
+		parts[1] = fallback != "" and fallback or "clip"
+
+	parts[#parts] = "#{parts[#parts]}.#{extension}"
+
+	return join_relative_path(parts)
 
 parse_directory = (dir) ->
 	home_dir = os.getenv("HOME")
@@ -175,6 +196,16 @@ run_subprocess = (params) ->
 		msg.verbose("Command failed! Reason: ", res.error, " Killed by us? ", res.killed_by_us and "yes" or "no")
 		return false
 	return true
+
+ensure_directory_exists = (dir) ->
+	return true if dir == nil or dir == ""
+	info, _ = utils.file_info(dir)
+	return true if info != nil
+	command = if is_windows
+		{"cmd", "/C", "mkdir", dir}
+	else
+		{"mkdir", "-p", dir}
+	run_subprocess({args: command, cancellable: false})
 
 shell_escape = (args) ->
 	ret = {}
