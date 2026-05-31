@@ -95,11 +95,28 @@ join_relative_path = (parts) ->
 	return path
 
 format_filename = (startTime, endTime, extension) ->
-	replaceFirst =
-		"%%mp": "%%mH.%%mM.%%mS"
-		"%%mP": "%%mH.%%mM.%%mS.%%mT"
-		"%%p": "%%wH.%%wM.%%wS"
-		"%%P": "%%wH.%%wM.%%wS.%%wT"
+	replaceFirst = {
+		{"%%sH", "%%wH"}
+		{"%%sh", "%%wh"}
+		{"%%sM", "%%wM"}
+		{"%%sm", "%%wm"}
+		{"%%sS", "%%wS"}
+		{"%%ss", "%%ws"}
+		{"%%sf", "%%wf"}
+		{"%%sT", "%%wT"}
+		{"%%eH", "%%mH"}
+		{"%%eh", "%%mh"}
+		{"%%eM", "%%mM"}
+		{"%%em", "%%mm"}
+		{"%%eS", "%%mS"}
+		{"%%es", "%%ms"}
+		{"%%ef", "%%mf"}
+		{"%%eT", "%%mT"}
+		{"%%mp", "%%mH.%%mM.%%mS"}
+		{"%%mP", "%%mH.%%mM.%%mS.%%mT"}
+		{"%%p", "%%wH.%%wM.%%wS"}
+		{"%%P", "%%wH.%%wM.%%wS.%%wT"}
+	}
 	replaceTable =
 		"%%wH": string.format("%02d", math.floor(startTime/(60*60)))
 		"%%wh": string.format("%d", math.floor(startTime/(60*60)))
@@ -129,7 +146,8 @@ format_filename = (startTime, endTime, extension) ->
 		"%%t%%": "%%"
 	filename = options.output_template
 
-	for format, value in pairs replaceFirst
+	for replacement in *replaceFirst
+		format, value = unpack(replacement)
 		filename, _ = filename\gsub(format, value)
 	for format, value in pairs replaceTable
 		filename, _ = filename\gsub(format, value)

@@ -18,6 +18,9 @@ local options = {
 	-- %T - Media title, if it exists, or filename, with extension (useful for some streams, such as YouTube).
 	-- %s, %e - Start and end time, with milliseconds
 	-- %S, %E - Start and end time, without milliseconds
+	-- %sH/%sM/%sS/%sT - Start hour/minute/second/millisecond, zero-padded
+	-- %eH/%eM/%eS/%eT - End hour/minute/second/millisecond, zero-padded
+	-- Lowercase variants (%sh, %sm, %ss, %sf, %eh, %em, %es, %ef) are not zero-padded.
 	-- %M - "-audio", if audio is enabled, empty otherwise
 	-- %R - "-(height)p", where height is the video's height, or scale_height, if it's enabled.
 	-- Path separators create subdirectories inside output_directory (or the source file directory when output_directory is empty).
