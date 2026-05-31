@@ -70,8 +70,8 @@ local options = {
 	-- the profile's tune, or "animation" if the profile does not define one.
 	-- Set to "none" to force no tune argument.
 	x264_tune = "",
-	-- Controls whether audio is included in the encode. Empty means use the
-	-- selected profile's audio settings if present. Set to "yes" to force audio on
+	-- Controls whether audio is included in the encode. Empty means use
+	-- the selected profile's audio settings. Set to "yes" to force audio on
 	-- when the profile provides audio codec settings, or "no" to disable audio.
 	audio_mode = "",
 	-- Useful for flags that may impact output filesize, such as qmin, qmax etc
