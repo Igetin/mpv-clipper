@@ -328,6 +328,18 @@ get_profile_default_audio_enabled = (name) ->
 
 	true
 
+get_profile_default_subtitles_enabled = (name) ->
+	subtitleVisibility = get_encoding_profile_option(name, 'sub')
+	return false if subtitleVisibility == 'no'
+
+	selectedSubtitle = get_encoding_profile_option(name, 'sid')
+	return false if selectedSubtitle == 'no'
+
+	videoEnabled = get_encoding_profile_option(name, 'video')
+	return false if videoEnabled == 'no'
+
+	true
+
 get_current_x264_tune = ->
 	if options.x264_tune == "none"
 		return nil
@@ -347,6 +359,16 @@ get_current_audio_enabled = ->
 
 get_current_audio_enabled_display = ->
 	get_current_audio_enabled! and 'yes' or 'no'
+
+get_current_burn_subtitles = ->
+	if options.burn_subtitles == 'no'
+		return false
+	if options.burn_subtitles == 'yes'
+		return true
+	get_profile_default_subtitles_enabled(options.encoding_profile)
+
+get_current_burn_subtitles_display = ->
+	get_current_burn_subtitles! and 'yes' or 'no'
 
 get_profile_desc = (name) ->
 	for p in *encoding_profiles

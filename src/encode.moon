@@ -13,6 +13,12 @@ get_active_tracks = ->
 			active[track["type"]][count + 1] = track
 	return active
 
+get_selected_subtitle_track = ->
+	for _, track in ipairs mp.get_property_native("track-list")
+		continue unless track["type"] == "sub"
+		return track if track["selected"]
+	nil
+
 filter_tracks_supported_by_format = (active_tracks, format) ->
 	has_video_codec = format.videoCodec != ""
 	has_audio_codec = format.audioCodec != ""
@@ -244,6 +250,22 @@ encode = (region, startTime, endTime) ->
 		if profileAudioCodec
 			append(command, {
 				"--oac=#{profileAudioCodec}"
+			})
+
+	if not get_current_burn_subtitles!
+		append(command, {
+			"--sid=no",
+			"--sub=no"
+		})
+	else
+		selectedSubtitle = get_selected_subtitle_track!
+		if selectedSubtitle
+			append_track(command, selectedSubtitle)
+			append(command, get_sub_options!)
+		else
+			append(command, {
+				"--sid=no",
+				"--sub=no"
 			})
 
 	-- active_tracks = get_active_tracks!

@@ -170,6 +170,13 @@ class EncodeOptionsPage extends Page
 				{"no", "no"}
 			}
 
+		subtitleOpts =
+			possibleValues: {
+				{"", "Profile default (#{get_profile_default_subtitles_enabled(options.encoding_profile) and 'yes' or 'no'})"}
+				{"yes", "yes"}
+				{"no", "no"}
+			}
+
 		profileOpts =
 			possibleValues: [{p['name'], p['profile-desc']} for p in *encoding_profiles]
 		fpsOpts =
@@ -192,7 +199,7 @@ class EncodeOptionsPage extends Page
 			{"crf", Option("int", "CRF", options.crf, crfOpts)},
 			{"x264_tune", Option("list", "x264 tune", options.x264_tune, x264TuneOpts)}
 			{"audio_mode", Option("list", "Audio", options.audio_mode, audioOpts)}
-			-- {"burn_subtitles", Option("bool", "Burn subtitles", options.burn_subtitles)},
+			{"burn_subtitles", Option("list", "Burn subtitles", options.burn_subtitles, subtitleOpts)}
 		}
 
 		@keybinds =
@@ -231,6 +238,11 @@ class EncodeOptionsPage extends Page
 				audioOption.opts.possibleValues[1][2] = "Profile default (#{get_profile_default_audio_enabled((self\getCurrentOption!)\getValue! ) and 'yes' or 'no'})"
 				if audioOption\getValue! == ""
 					audioOption\setValue("")
+			if optPair[1] == "burn_subtitles"
+				subtitleOption = optPair[2]
+				subtitleOption.opts.possibleValues[1][2] = "Profile default (#{get_profile_default_subtitles_enabled((self\getCurrentOption!)\getValue! ) and 'yes' or 'no'})"
+				if subtitleOption\getValue! == ""
+					subtitleOption\setValue("")
 
 	prevOpt: =>
 		for i = @currentOption - 1, 1, -1

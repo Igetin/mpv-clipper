@@ -85,7 +85,10 @@ local options = {
 	margin = 10,
 	message_duration = 5,
 	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf
-	burn_subtitles = false,
+	-- Controls whether subtitles are burned into the encode. Empty means use
+	-- the selected profile's subtitle settings. Set to "yes" to force subtitles
+	-- on, or "no" to disable them.
+	burn_subtitles = "",
 	-- MPV command to run upon successful encoding.
 	-- %{output} will be replaced with the path to the resulting file.
 	completion_command = "",

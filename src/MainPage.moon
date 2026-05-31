@@ -56,6 +56,7 @@ class MainPage extends Page
 		ass\append("#{bold('CRF:')} #{options.crf}\\N")
 		ass\append("#{bold('Tune:')} #{get_current_x264_tune_display!}\\N")
 		ass\append("#{bold('Audio:')} #{get_current_audio_enabled_display!}\\N")
+		ass\append("#{bold('Subtitles:')} #{get_current_burn_subtitles_display!}\\N")
 		ass\append("#{bold('Start time:')} #{seconds_to_time_string(@startTime)}\\N")
 		ass\append("#{bold('End time:')} #{seconds_to_time_string(@endTime)}\\N")
 		if @region.x > 0 and @region.y > 0
