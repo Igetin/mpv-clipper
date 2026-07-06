@@ -8,6 +8,14 @@ class CropPage extends Page
 			"r": self\reset
 			"ESC": self\cancel
 			"ENTER": self\finish
+			-- Gamepad controls. Note that the crop points are placed at the mouse
+			-- cursor position, so a mouse is still needed for moving the points.
+			"GAMEPAD_LEFT_TRIGGER": self\setPointA
+			"GAMEPAD_RIGHT_TRIGGER": self\setPointB
+			"GAMEPAD_ACTION_LEFT": self\reset
+			"GAMEPAD_ACTION_RIGHT": self\cancel
+			"GAMEPAD_START": self\cancel
+			"GAMEPAD_ACTION_DOWN": self\finish
 		self\reset!
 		@callback = callback
 		-- If we have a region, set point A and B from it
@@ -78,10 +86,10 @@ class CropPage extends Page
 		ass\new_event()
 		self\setup_text(ass)
 		ass\append("#{bold('Crop:')}\\N")
-		ass\append("#{bold('1:')} change point A (#{@pointA.x}, #{@pointA.y})\\N")
-		ass\append("#{bold('2:')} change point B (#{@pointB.x}, #{@pointB.y})\\N")
-		ass\append("#{bold('r:')} reset to whole screen\\N")
-		ass\append("#{bold('ESC:')} cancel crop\\N")
+		ass\append("#{bold('1 / LT:')} change point A (#{@pointA.x}, #{@pointA.y})\\N")
+		ass\append("#{bold('2 / RT:')} change point B (#{@pointB.x}, #{@pointB.y})\\N")
+		ass\append("#{bold('r / X:')} reset to whole screen\\N")
+		ass\append("#{bold('ESC / B:')} cancel crop\\N")
 		width, height = math.abs(@pointA.x - @pointB.x), math.abs(@pointA.y - @pointB.y)
-		ass\append("#{bold('ENTER:')} confirm crop (#{width}x#{height})\\N")
+		ass\append("#{bold('ENTER / A:')} confirm crop (#{width}x#{height})\\N")
 		mp.set_osd_ass(window.w, window.h, ass.text)

@@ -209,6 +209,15 @@ class EncodeOptionsPage extends Page
 			"DOWN": self\nextOpt
 			"ENTER": self\confirmOpts
 			"ESC": self\cancelOpts
+			-- Gamepad controls. This page is fully modal, so overriding the
+			-- d-pad seek bindings is fine here.
+			"GAMEPAD_DPAD_LEFT": self\leftKey
+			"GAMEPAD_DPAD_RIGHT": self\rightKey
+			"GAMEPAD_DPAD_UP": self\prevOpt
+			"GAMEPAD_DPAD_DOWN": self\nextOpt
+			"GAMEPAD_ACTION_DOWN": self\confirmOpts
+			"GAMEPAD_ACTION_RIGHT": self\cancelOpts
+			"GAMEPAD_START": self\cancelOpts
 
 	getCurrentOption: =>
 		return @options[@currentOption][2]
@@ -280,7 +289,7 @@ class EncodeOptionsPage extends Page
 			opt = optPair[2]
 			if opt\optVisible!
 				opt\draw(ass, @currentOption == i)
-		ass\append("\\N▲ / ▼: navigate\\N")
-		ass\append("#{bold('ENTER:')} confirm options\\N")
-		ass\append("#{bold('ESC:')} cancel\\N")
+		ass\append("\\N▲ / ▼ / D-pad: navigate and change values\\N")
+		ass\append("#{bold('ENTER / A:')} confirm options\\N")
+		ass\append("#{bold('ESC / B:')} cancel\\N")
 		mp.set_osd_ass(window_w, window_h, ass.text)

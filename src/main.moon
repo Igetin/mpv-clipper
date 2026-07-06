@@ -1,6 +1,8 @@
 monitor_dimensions!
 mainPage = MainPage!
 mp.add_key_binding(options.keybind, "display-webm-encoder", mainPage\show, {repeatable: false})
+if options.gamepad_keybind and options.gamepad_keybind != ""
+	mp.add_key_binding(options.gamepad_keybind, "display-webm-encoder-gamepad", mainPage\show, {repeatable: false})
 mp.register_event("file-loaded", mainPage\setupStartAndEndTimes)
 
 msg.verbose("Loaded mpv-clipper script!")

@@ -8,6 +8,8 @@ class PreviewPage extends Page
 
 		@keybinds =
 			"ESC": self\cancel
+			"GAMEPAD_ACTION_RIGHT": self\cancel
+			"GAMEPAD_START": self\cancel
 
 		@region = region
 		@startTime = startTime
@@ -47,7 +49,7 @@ class PreviewPage extends Page
 		ass = assdraw.ass_new()
 		ass\new_event()
 		self\setup_text(ass)
-		ass\append("Press #{bold('ESC')} to exit preview.\\N")
+		ass\append("Press #{bold('ESC')} or #{bold('B')} to exit preview.\\N")
 		mp.set_osd_ass(window_w, window_h, ass.text)
 
 	cancel: =>

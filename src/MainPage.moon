@@ -10,6 +10,19 @@ class MainPage extends Page
 			"p": self\preview
 			"e": self\encode
 			"ESC": self\hide
+			-- Gamepad controls. The d-pad, shoulder buttons and pause stay unbound
+			-- here on purpose, so seeking/framestepping keeps working while the
+			-- menu is open.
+			"GAMEPAD_LEFT_STICK": self\crop
+			"GAMEPAD_ACTION_LEFT": self\setStartTime
+			"GAMEPAD_ACTION_UP": self\setEndTime
+			"GAMEPAD_LEFT_TRIGGER": self\jumpToStartTime
+			"GAMEPAD_RIGHT_TRIGGER": self\jumpToEndTime
+			"GAMEPAD_RIGHT_STICK": self\changeOptions
+			"GAMEPAD_ACTION_DOWN": self\preview
+			"GAMEPAD_BACK": self\encode
+			"GAMEPAD_ACTION_RIGHT": self\hide
+			"GAMEPAD_START": self\hide
 		@startTime = -1
 		@endTime = -1
 		@region = Region!
@@ -61,14 +74,16 @@ class MainPage extends Page
 		ass\append("#{bold('End time:')} #{seconds_to_time_string(@endTime)}\\N")
 		if @region.x > 0 and @region.y > 0
 			ass\append("#{bold('Crop:')} #{@region.x}×#{@region.y}")
-		ass\append("\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N") -- yeah
-		ass\append("#{bold('C:')} crop\\N")
-		ass\append("#{bold('1:')} set start time\\N")
-		ass\append("#{bold('2:')} set end time\\N")
-		ass\append("#{bold('O:')} change options\\N")
-		ass\append("#{bold('P:')} preview\\N")
-		ass\append("#{bold('E:')} encode\\N")
-		ass\append("#{bold('ESC:')} close\\N")
+		ass\append("\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N") -- yeah
+		ass\append("#{bold('C / LS:')} crop\\N")
+		ass\append("#{bold('1 / X:')} set start time\\N")
+		ass\append("#{bold('2 / Y:')} set end time\\N")
+		ass\append("#{bold('! / LT:')} jump to start time\\N")
+		ass\append("#{bold('@ / RT:')} jump to end time\\N")
+		ass\append("#{bold('O / RS:')} change options\\N")
+		ass\append("#{bold('P / A:')} preview\\N")
+		ass\append("#{bold('E / View:')} encode\\N")
+		ass\append("#{bold('ESC / B / Menu:')} close\\N")
 		mp.set_osd_ass(window_w, window_h, ass.text)
 	
 	show: =>

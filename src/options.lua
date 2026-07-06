@@ -1,6 +1,11 @@
 local options = {
 	-- Defaults to shift+w
 	keybind = "W",
+	-- Gamepad button for opening the menu (the button also closes it while it's
+	-- open). Requires mpv built with SDL2 gamepad support and input-gamepad=yes.
+	-- GAMEPAD_START is the "Menu" (hamburger) button on an Xbox controller.
+	-- Set to an empty string to disable.
+	gamepad_keybind = "GAMEPAD_START",
 	-- If empty, saves on the same directory of the playing video.
 	-- A starting "~" will be replaced by the home dir.
 	-- This field is delimited by double-square-brackets - [[ and ]] - instead of
