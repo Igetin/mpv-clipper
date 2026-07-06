@@ -65,26 +65,31 @@ class MainPage extends Page
 		ass = assdraw.ass_new()
 		ass\new_event()
 		self\setup_text(ass)
-		ass\append("#{bold('Profile:')} #{get_profile_desc(options.encoding_profile)}\\N")
-		ass\append("#{bold('CRF:')} #{options.crf}\\N")
-		ass\append("#{bold('Tune:')} #{get_current_x264_tune_display!}\\N")
-		ass\append("#{bold('Audio:')} #{get_current_audio_enabled_display!}\\N")
-		ass\append("#{bold('Subtitles:')} #{get_current_burn_subtitles_display!}\\N")
-		ass\append("#{bold('Start time:')} #{seconds_to_time_string(@startTime)}\\N")
-		ass\append("#{bold('End time:')} #{seconds_to_time_string(@endTime)}\\N")
+		status = {
+			{"Profile", get_profile_desc(options.encoding_profile)},
+			{"CRF", "#{options.crf}"},
+			{"Tune", get_current_x264_tune_display!},
+			{"Audio", get_current_audio_enabled_display!},
+			{"Subtitles", get_current_burn_subtitles_display!},
+			{"Start time", seconds_to_time_string(@startTime)},
+			{"End time", seconds_to_time_string(@endTime)},
+		}
 		if @region.x > 0 and @region.y > 0
-			ass\append("#{bold('Crop:')} #{@region.x}×#{@region.y}")
+			status[#status + 1] = {"Crop", "#{@region.x}×#{@region.y}"}
+		self\draw_instructions(ass, status)
 		ass\new_event()
 		self\setup_text_bottom(ass)
-		ass\append("#{bold('C / LS:')} crop\\N")
-		ass\append("#{bold('1 / X:')} set start time\\N")
-		ass\append("#{bold('2 / Y:')} set end time\\N")
-		ass\append("#{bold('! / LT:')} jump to start time\\N")
-		ass\append("#{bold('@ / RT:')} jump to end time\\N")
-		ass\append("#{bold('O / RS:')} change options\\N")
-		ass\append("#{bold('P / A:')} preview\\N")
-		ass\append("#{bold('E / View:')} encode\\N")
-		ass\append("#{bold('ESC / B / Menu:')} close\\N")
+		self\draw_instructions(ass, {
+			{"C / LS", "crop"},
+			{"1 / X", "set start time"},
+			{"2 / Y", "set end time"},
+			{"! / LT", "jump to start time"},
+			{"@ / RT", "jump to end time"},
+			{"O / RS", "change options"},
+			{"P / A", "preview"},
+			{"E / View", "encode"},
+			{"ESC / B / Menu", "close"},
+		})
 		mp.set_osd_ass(window_w, window_h, ass.text)
 	
 	show: =>

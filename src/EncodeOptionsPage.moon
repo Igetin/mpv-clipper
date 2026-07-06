@@ -111,11 +111,12 @@ class Option
 				{value, displayValue} = @opts.possibleValues[@value]
 				return displayValue or value
 
-	draw: (ass, selected) =>
+	draw: (ass, selected, labelWidth) =>
+		pad = labelWidth and string.rep(" ", labelWidth - utf8_len(@displayText)) or ""
 		if selected
-			ass\append("#{bold(@displayText)}: ")
+			ass\append("#{bold(@displayText)}:#{pad} ")
 		else
-			ass\append("#{@displayText}: ")
+			ass\append("#{@displayText}:#{pad} ")
 		-- left arrow unicode
 		ass\append("◀ ") if self\hasPrevious!
 		ass\append(self\getDisplayValue!)
@@ -285,11 +286,19 @@ class EncodeOptionsPage extends Page
 		ass\new_event()
 		self\setup_text(ass)
 		ass\append("#{bold('Options:')}\\N\\N")
+		labelWidth = 0
+		for _, optPair in ipairs @options
+			opt = optPair[2]
+			if opt\optVisible!
+				labelWidth = math.max(labelWidth, utf8_len(opt.displayText))
 		for i, optPair in ipairs @options
 			opt = optPair[2]
 			if opt\optVisible!
-				opt\draw(ass, @currentOption == i)
-		ass\append("\\N▲ / ▼ / D-pad: navigate and change values\\N")
-		ass\append("#{bold('ENTER / A:')} confirm options\\N")
-		ass\append("#{bold('ESC / B:')} cancel\\N")
+				opt\draw(ass, @currentOption == i, labelWidth)
+		ass\append("\\N")
+		self\draw_instructions(ass, {
+			{"▲ / ▼ / D-pad", "navigate and change values"},
+			{"ENTER / A", "confirm options"},
+			{"ESC / B", "cancel"},
+		})
 		mp.set_osd_ass(window_w, window_h, ass.text)

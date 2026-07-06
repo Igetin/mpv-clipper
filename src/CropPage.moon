@@ -86,10 +86,12 @@ class CropPage extends Page
 		ass\new_event()
 		self\setup_text(ass)
 		ass\append("#{bold('Crop:')}\\N")
-		ass\append("#{bold('1 / LT:')} change point A (#{@pointA.x}, #{@pointA.y})\\N")
-		ass\append("#{bold('2 / RT:')} change point B (#{@pointB.x}, #{@pointB.y})\\N")
-		ass\append("#{bold('r / X:')} reset to whole screen\\N")
-		ass\append("#{bold('ESC / B:')} cancel crop\\N")
 		width, height = math.abs(@pointA.x - @pointB.x), math.abs(@pointA.y - @pointB.y)
-		ass\append("#{bold('ENTER / A:')} confirm crop (#{width}x#{height})\\N")
+		self\draw_instructions(ass, {
+			{"1 / LT", "change point A (#{@pointA.x}, #{@pointA.y})"},
+			{"2 / RT", "change point B (#{@pointB.x}, #{@pointB.y})"},
+			{"r / X", "reset to whole screen"},
+			{"ESC / B", "cancel crop"},
+			{"ENTER / A", "confirm crop (#{width}x#{height})"},
+		})
 		mp.set_osd_ass(window.w, window.h, ass.text)

@@ -87,6 +87,12 @@ local options = {
 	display_progress = "auto",
 	-- The font size used in the menu. Isn't used for the notifications (started encode, finished encode etc)
 	font_size = 28,
+	-- The font used in the menu. The menu text is aligned into columns with
+	-- spaces, so a monospace font is recommended. Note that generic aliases
+	-- like "monospace" don't resolve reliably through libass, so use a
+	-- concrete font family name (see fc-list). Set to an empty string to use
+	-- mpv's default OSD font.
+	menu_font = "Noto Sans Mono",
 	margin = 10,
 	message_duration = 5,
 	encoding_profile = "enc-f-mp4",  -- from default encoding-profiles.conf

@@ -77,6 +77,7 @@ class Page
 		ass\append("{\\an7}")
 		ass\pos(margin, margin)
 		ass\append("{\\fs#{options.font_size * scale}}")
+		self\setup_font(ass)
 
 	-- Like setup_text, but anchored to the bottom-left corner, so the text
 	-- block grows upward and never clips out of the window.
@@ -87,3 +88,20 @@ class Page
 		ass\append("{\\an1}")
 		ass\pos(margin, window_h - margin)
 		ass\append("{\\fs#{options.font_size * scale}}")
+		self\setup_font(ass)
+
+	setup_font: (ass) =>
+		if options.menu_font and options.menu_font != ""
+			ass\append("{\\fn#{options.menu_font}}")
+
+	-- Draw "label: description" lines with the descriptions aligned into a
+	-- column, based on the longest label. Lines are given as
+	-- {label, description} pairs. Assumes a monospace menu font.
+	draw_instructions: (ass, lines) =>
+		width = 0
+		for line in *lines
+			width = math.max(width, utf8_len(line[1]))
+		for line in *lines
+			{label, desc} = line
+			pad = string.rep(" ", width - utf8_len(label))
+			ass\append("#{bold("#{label}:")}#{pad} #{desc}\\N")

@@ -1,6 +1,11 @@
 bold = (text) ->
 	"{\\b1}#{text}{\\b0}"
 
+-- Number of characters (not bytes) in a UTF-8 string.
+utf8_len = (s) ->
+	_, count = s\gsub("[^\128-\191]", "")
+	count
+
 -- OSD message, using ass.
 message = (text, duration) ->
 	ass = mp.get_property_osd("osd-ass-cc/0")
