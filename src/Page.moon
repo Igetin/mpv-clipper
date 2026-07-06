@@ -77,3 +77,13 @@ class Page
 		ass\append("{\\an7}")
 		ass\pos(margin, margin)
 		ass\append("{\\fs#{options.font_size * scale}}")
+
+	-- Like setup_text, but anchored to the bottom-left corner, so the text
+	-- block grows upward and never clips out of the window.
+	setup_text_bottom: (ass) =>
+		scale = calculate_scale_factor!
+		margin = options.margin * scale
+		_, window_h = mp.get_osd_size()
+		ass\append("{\\an1}")
+		ass\pos(margin, window_h - margin)
+		ass\append("{\\fs#{options.font_size * scale}}")

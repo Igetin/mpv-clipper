@@ -74,7 +74,8 @@ class MainPage extends Page
 		ass\append("#{bold('End time:')} #{seconds_to_time_string(@endTime)}\\N")
 		if @region.x > 0 and @region.y > 0
 			ass\append("#{bold('Crop:')} #{@region.x}×#{@region.y}")
-		ass\append("\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N\\N") -- yeah
+		ass\new_event()
+		self\setup_text_bottom(ass)
 		ass\append("#{bold('C / LS:')} crop\\N")
 		ass\append("#{bold('1 / X:')} set start time\\N")
 		ass\append("#{bold('2 / Y:')} set end time\\N")
